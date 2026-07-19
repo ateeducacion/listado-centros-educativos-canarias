@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Listado de centros educativos de Canarias</title>
+  <meta name="description" content="Documentación y consulta del listado enriquecido de centros educativos de Canarias.">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="hero">
+    <div class="container">
+      <p class="eyebrow">Datos abiertos · Canarias</p>
+      <h1>Listado de centros educativos de Canarias</h1>
+      <p class="lead">Un único CSV, actualizado automáticamente y enriquecido con CEP, CER, EOEP y zonas de inspección educativa.</p>
+      <div class="actions">
+        <a class="button" href="centros.csv">Descargar CSV</a>
+        <a class="button secondary" href="centros.json">Descargar JSON</a>
+        <a class="button secondary" href="https://github.com/ateeducacion/listado-centros-educativos-canarias">Ver repositorio</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section>
+      <h2>Qué contiene</h2>
+      <p>El archivo <code>centros.csv</code> parte del conjunto oficial de centros educativos y añade información que aparece vacía o distribuida en otras fuentes: código y nombre del Centro del Profesorado, CER, EOEP y zona de inspección. No se publica el nombre de la persona inspectora.</p>
+      <p>Los CEP, CER, EOEP y oficinas Medusa se mantienen dentro del mismo listado, identificados mediante las columnas de tipo y etapa, para evitar fragmentar la información en varios archivos.</p>
+    </section>
+
+    <section>
+      <h2>Consulta</h2>
+      <div class="filters">
+        <label>Buscar por código, nombre, municipio, CEP o zona
+          <input id="search" type="search" placeholder="Ej.: 38011303, La Laguna, CEP...">
+        </label>
+        <label>Isla
+          <select id="island"><option value="">Todas</option></select>
+        </label>
+      </div>
+      <p id="summary" class="summary">Cargando datos…</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Denominación</th>
+              <th>Municipio</th>
+              <th>Isla</th>
+              <th>CEP</th>
+              <th>Zona de inspección</th>
+            </tr>
+          </thead>
+          <tbody id="results"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <h2>Cómo se genera</h2>
+      <ol>
+        <li>Se consulta la API CKAN de Datos Abiertos de Canarias.</li>
+        <li>Se descarga el listado oficial más reciente de centros educativos.</li>
+        <li>Se cruzan los códigos de centro con el conjunto oficial de zonas de inspección.</li>
+        <li>Se completan las asignaciones de CEP mediante una tabla curada y versionada.</li>
+        <li>Se conservan y normalizan los datos de CER y EOEP disponibles.</li>
+        <li>Se generan y validan <code>centros.csv</code> y <code>centros.json</code>.</li>
+      </ol>
+    </section>
+
+    <section>
+      <h2>Actualización</h2>
+      <p>Un workflow se ejecuta cada noche. Cuando detecta cambios en las fuentes, regenera los archivos y abre o actualiza un pull request. Ningún cambio entra directamente en la rama principal sin revisión.</p>
+    </section>
+
+    <section>
+      <h2>Fuentes, atribución y licencia</h2>
+      <p>Información elaborada utilizando, entre otras, la obtenida del Gobierno de Canarias. Los datos han sido transformados y enriquecidos; esta publicación no es oficial ni implica respaldo del Gobierno de Canarias.</p>
+      <p>El repositorio se distribuye bajo <a href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International</a>. Consulte el archivo <a href="https://github.com/ateeducacion/listado-centros-educativos-canarias/blob/main/LICENSE">LICENSE</a> y el archivo <a href="https://github.com/ateeducacion/listado-centros-educativos-canarias/blob/main/CITATION.cff">CITATION.cff</a>.</p>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">Área de Tecnología Educativa · Gobierno de Canarias</div>
+  </footer>
+  <script src="app.js"></script>
+</body>
+</html>
