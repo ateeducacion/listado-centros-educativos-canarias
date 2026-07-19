@@ -1,8 +1,18 @@
 const state = {
   rows: [],
   filtered: [],
-  map: null,
-  markers: null,
+};
+
+const SVG_NS = "http://www.w3.org/2000/svg";
+const MAP_BOUNDS = {
+  minLatitude: 27.55,
+  maxLatitude: 29.45,
+  minLongitude: -18.35,
+  maxLongitude: -13.25,
+  paddingX: 55,
+  paddingY: 45,
+  width: 1000,
+  height: 430,
 };
 
 const text = (value) => String(value ?? "").trim();
@@ -10,15 +20,6 @@ const normalized = (value) => text(value)
   .normalize("NFD")
   .replace(/[\u0300-\u036f]/g, "")
   .toLowerCase();
-
-function escapeHtml(value) {
-  return text(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
 
 function coordinates(row) {
   const latitude = Number.parseFloat(text(row.Latitud).replace(",", "."));
@@ -28,11 +29,29 @@ function coordinates(row) {
     return null;
   }
 
-  if (latitude < 27 || latitude > 30 || longitude < -19 || longitude > -13) {
+  if (
+    latitude < MAP_BOUNDS.minLatitude
+    || latitude > MAP_BOUNDS.maxLatitude
+    || longitude < MAP_BOUNDS.minLongitude
+    || longitude > MAP_BOUNDS.maxLongitude
+  ) {
     return null;
   }
 
-  return [latitude, longitude];
+  return { latitude, longitude };
+}
+
+function project({ latitude, longitude }) {
+  const usableWidth = MAP_BOUNDS.width - (MAP_BOUNDS.paddingX * 2);
+  const usableHeight = MAP_BOUNDS.height - (MAP_BOUNDS.paddingY * 2);
+  const x = MAP_BOUNDS.paddingX
+    + ((longitude - MAP_BOUNDS.minLongitude)
+      / (MAP_BOUNDS.maxLongitude - MAP_BOUNDS.minLongitude)) * usableWidth;
+  const y = MAP_BOUNDS.paddingY
+    + ((MAP_BOUNDS.maxLatitude - latitude)
+      / (MAP_BOUNDS.maxLatitude - MAP_BOUNDS.minLatitude)) * usableHeight;
+
+  return { x, y };
 }
 
 function showDetail(row) {
@@ -74,30 +93,31 @@ function showDetail(row) {
   dialog.showModal();
 }
 
-function initialiseMap() {
-  state.map = L.map("map", {
-    scrollWheelZoom: false,
-  }).setView([28.3, -16.2], 7);
+function showTooltip(event, row) {
+  const tooltip = document.querySelector("#map-tooltip");
+  const map = document.querySelector("#map");
+  const mapRect = map.getBoundingClientRect();
 
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 19,
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-  }).addTo(state.map);
+  tooltip.replaceChildren();
 
-  state.markers = L.markerClusterGroup({
-    showCoverageOnHover: false,
-    maxClusterRadius: 45,
-  });
-  state.map.addLayer(state.markers);
+  const strong = document.createElement("strong");
+  strong.textContent = text(row.Denominacion) || "Centro educativo";
+  const details = document.createElement("span");
+  details.textContent = `${text(row.Codigo)} · ${text(row.Municipio)} · ${text(row.Isla)}`;
+  tooltip.append(strong, details);
+
+  tooltip.style.left = `${event.clientX - mapRect.left + 12}px`;
+  tooltip.style.top = `${event.clientY - mapRect.top + 12}px`;
+  tooltip.hidden = false;
+}
+
+function hideTooltip() {
+  document.querySelector("#map-tooltip").hidden = true;
 }
 
 function renderMap() {
-  if (!state.map || !state.markers) {
-    return;
-  }
-
-  state.markers.clearLayers();
-  const bounds = [];
+  const points = document.querySelector("#map-points");
+  const fragment = document.createDocumentFragment();
   let mapped = 0;
 
   state.filtered.forEach((row) => {
@@ -106,31 +126,45 @@ function renderMap() {
       return;
     }
 
-    const marker = L.marker(point);
-    marker.bindPopup(`
-      <strong>${escapeHtml(row.Denominacion)}</strong><br>
-      Código: ${escapeHtml(row.Codigo)}<br>
-      ${escapeHtml(row.Municipio)} · ${escapeHtml(row.Isla)}<br>
-      <button type="button" class="popup-detail" data-code="${escapeHtml(row.Codigo)}">Ver todos los datos</button>
-    `);
+    const { x, y } = project(point);
+    const circle = document.createElementNS(SVG_NS, "circle");
+    circle.setAttribute("cx", x.toFixed(2));
+    circle.setAttribute("cy", y.toFixed(2));
+    circle.setAttribute("r", "4.5");
+    circle.setAttribute("tabindex", "0");
+    circle.setAttribute("role", "button");
+    circle.setAttribute("aria-label", `Ver ${text(row.Denominacion)}`);
+    circle.dataset.code = text(row.Codigo);
 
-    marker.on("popupopen", (event) => {
-      const button = event.popup.getElement()?.querySelector(".popup-detail");
-      button?.addEventListener("click", () => showDetail(row), { once: true });
+    circle.addEventListener("click", () => showDetail(row));
+    circle.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        showDetail(row);
+      }
     });
+    circle.addEventListener("pointerenter", (event) => showTooltip(event, row));
+    circle.addEventListener("pointermove", (event) => showTooltip(event, row));
+    circle.addEventListener("pointerleave", hideTooltip);
+    circle.addEventListener("focus", () => {
+      const mapRect = document.querySelector("#map").getBoundingClientRect();
+      const svgRect = document.querySelector("#map-svg").getBoundingClientRect();
+      const event = {
+        clientX: svgRect.left + (x / MAP_BOUNDS.width) * svgRect.width,
+        clientY: svgRect.top + (y / MAP_BOUNDS.height) * svgRect.height,
+      };
+      showTooltip(event, row);
+      document.querySelector("#map-tooltip").style.left = `${event.clientX - mapRect.left + 12}px`;
+      document.querySelector("#map-tooltip").style.top = `${event.clientY - mapRect.top + 12}px`;
+    });
+    circle.addEventListener("blur", hideTooltip);
 
-    state.markers.addLayer(marker);
-    bounds.push(point);
+    fragment.appendChild(circle);
     mapped += 1;
   });
 
+  points.replaceChildren(fragment);
   document.querySelector("#map-summary").textContent = `${mapped} resultados con coordenadas disponibles.`;
-
-  if (bounds.length > 0) {
-    state.map.fitBounds(bounds, { padding: [24, 24], maxZoom: 13 });
-  } else {
-    state.map.setView([28.3, -16.2], 7);
-  }
 }
 
 function render() {
@@ -152,6 +186,12 @@ function render() {
     ].join(" "));
 
     return (!query || haystack.includes(query)) && (!island || text(row.Isla) === island);
+  });
+
+  document.querySelectorAll(".islands [data-island]").forEach((shape) => {
+    const selected = island && normalized(shape.dataset.island) === normalized(island);
+    shape.classList.toggle("selected", Boolean(selected));
+    shape.classList.toggle("muted", Boolean(island && !selected));
   });
 
   const results = document.querySelector("#results");
@@ -203,7 +243,6 @@ async function main() {
     select.appendChild(option);
   });
 
-  initialiseMap();
   document.querySelector("#search").addEventListener("input", render);
   select.addEventListener("change", render);
   render();
