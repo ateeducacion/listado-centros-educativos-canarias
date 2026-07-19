@@ -1,20 +1,12 @@
 const state = {
   rows: [],
   filtered: [],
+  map: null,
+  mapReady: false,
+  rowsByCode: new Map(),
 };
 
-const SVG_NS = "http://www.w3.org/2000/svg";
-const MAP_BOUNDS = {
-  minLatitude: 27.55,
-  maxLatitude: 29.45,
-  minLongitude: -18.35,
-  maxLongitude: -13.25,
-  paddingX: 55,
-  paddingY: 45,
-  width: 1000,
-  height: 430,
-};
-
+const CANARY_BOUNDS = [[-18.55, 27.45], [-13.15, 29.55]];
 const text = (value) => String(value ?? "").trim();
 const normalized = (value) => text(value)
   .normalize("NFD")
@@ -29,35 +21,18 @@ function coordinates(row) {
     return null;
   }
 
-  if (
-    latitude < MAP_BOUNDS.minLatitude
-    || latitude > MAP_BOUNDS.maxLatitude
-    || longitude < MAP_BOUNDS.minLongitude
-    || longitude > MAP_BOUNDS.maxLongitude
-  ) {
+  if (latitude < 27.3 || latitude > 29.7 || longitude < -18.7 || longitude > -13) {
     return null;
   }
 
-  return { latitude, longitude };
-}
-
-function project({ latitude, longitude }) {
-  const usableWidth = MAP_BOUNDS.width - (MAP_BOUNDS.paddingX * 2);
-  const usableHeight = MAP_BOUNDS.height - (MAP_BOUNDS.paddingY * 2);
-  const x = MAP_BOUNDS.paddingX
-    + ((longitude - MAP_BOUNDS.minLongitude)
-      / (MAP_BOUNDS.maxLongitude - MAP_BOUNDS.minLongitude)) * usableWidth;
-  const y = MAP_BOUNDS.paddingY
-    + ((MAP_BOUNDS.maxLatitude - latitude)
-      / (MAP_BOUNDS.maxLatitude - MAP_BOUNDS.minLatitude)) * usableHeight;
-
-  return { x, y };
+  return [longitude, latitude];
 }
 
 function showDetail(row) {
   const dialog = document.querySelector("#detail-dialog");
-  const title = text(row.Denominacion) || text(row.Codigo) || "Detalle del registro";
-  document.querySelector("#detail-title").textContent = title;
+  document.querySelector("#detail-title").textContent = text(row.Denominacion)
+    || text(row.Codigo)
+    || "Detalle del registro";
 
   const content = document.querySelector("#detail-content");
   content.replaceChildren(...Object.entries(row).map(([key, value]) => {
@@ -93,78 +68,210 @@ function showDetail(row) {
   dialog.showModal();
 }
 
-function showTooltip(event, row) {
-  const tooltip = document.querySelector("#map-tooltip");
-  const map = document.querySelector("#map");
-  const mapRect = map.getBoundingClientRect();
+function featureCollection(rows) {
+  return {
+    type: "FeatureCollection",
+    features: rows.flatMap((row) => {
+      const point = coordinates(row);
+      if (!point) {
+        return [];
+      }
 
-  tooltip.replaceChildren();
+      return [{
+        type: "Feature",
+        geometry: {
+          type: "Point",
+          coordinates: point,
+        },
+        properties: {
+          code: text(row.Codigo),
+          name: text(row.Denominacion),
+          municipality: text(row.Municipio),
+          island: text(row.Isla),
+          stage: text(row.DesEtapaCentro),
+        },
+      }];
+    }),
+  };
+}
 
-  const strong = document.createElement("strong");
-  strong.textContent = text(row.Denominacion) || "Centro educativo";
+function popupContent(properties) {
+  const wrapper = document.createElement("div");
+  wrapper.className = "centre-popup";
+
+  const title = document.createElement("strong");
+  title.textContent = properties.name || "Centro educativo";
+
   const details = document.createElement("span");
-  details.textContent = `${text(row.Codigo)} · ${text(row.Municipio)} · ${text(row.Isla)}`;
-  tooltip.append(strong, details);
+  details.textContent = [properties.code, properties.municipality, properties.island]
+    .filter(Boolean)
+    .join(" · ");
 
-  tooltip.style.left = `${event.clientX - mapRect.left + 12}px`;
-  tooltip.style.top = `${event.clientY - mapRect.top + 12}px`;
-  tooltip.hidden = false;
+  const button = document.createElement("button");
+  button.type = "button";
+  button.textContent = "Ver todos los datos";
+  button.addEventListener("click", () => {
+    const row = state.rowsByCode.get(properties.code);
+    if (row) {
+      showDetail(row);
+    }
+  });
+
+  wrapper.append(title, details, button);
+  return wrapper;
 }
 
-function hideTooltip() {
-  document.querySelector("#map-tooltip").hidden = true;
-}
+function addMapLayers() {
+  state.map.addSource("centres", {
+    type: "geojson",
+    data: featureCollection([]),
+    cluster: true,
+    clusterMaxZoom: 13,
+    clusterRadius: 45,
+  });
 
-function renderMap() {
-  const points = document.querySelector("#map-points");
-  const fragment = document.createDocumentFragment();
-  let mapped = 0;
+  state.map.addLayer({
+    id: "clusters",
+    type: "circle",
+    source: "centres",
+    filter: ["has", "point_count"],
+    paint: {
+      "circle-color": [
+        "step",
+        ["get", "point_count"],
+        "#1479b8",
+        50,
+        "#0b5f96",
+        200,
+        "#073f68",
+      ],
+      "circle-radius": [
+        "step",
+        ["get", "point_count"],
+        17,
+        50,
+        23,
+        200,
+        30,
+      ],
+      "circle-stroke-width": 2,
+      "circle-stroke-color": "#ffffff",
+      "circle-opacity": 0.9,
+    },
+  });
 
-  state.filtered.forEach((row) => {
-    const point = coordinates(row);
-    if (!point) {
+  state.map.addLayer({
+    id: "cluster-count",
+    type: "symbol",
+    source: "centres",
+    filter: ["has", "point_count"],
+    layout: {
+      "text-field": ["get", "point_count_abbreviated"],
+      "text-size": 12,
+    },
+    paint: {
+      "text-color": "#ffffff",
+    },
+  });
+
+  state.map.addLayer({
+    id: "unclustered-centres",
+    type: "circle",
+    source: "centres",
+    filter: ["!", ["has", "point_count"]],
+    paint: {
+      "circle-color": "#0b76b7",
+      "circle-radius": ["interpolate", ["linear"], ["zoom"], 7, 4, 13, 7],
+      "circle-stroke-width": 2,
+      "circle-stroke-color": "#ffffff",
+      "circle-opacity": 0.88,
+    },
+  });
+
+  state.map.on("click", "clusters", async (event) => {
+    const feature = state.map.queryRenderedFeatures(event.point, { layers: ["clusters"] })[0];
+    if (!feature) {
       return;
     }
 
-    const { x, y } = project(point);
-    const circle = document.createElementNS(SVG_NS, "circle");
-    circle.setAttribute("cx", x.toFixed(2));
-    circle.setAttribute("cy", y.toFixed(2));
-    circle.setAttribute("r", "4.5");
-    circle.setAttribute("tabindex", "0");
-    circle.setAttribute("role", "button");
-    circle.setAttribute("aria-label", `Ver ${text(row.Denominacion)}`);
-    circle.dataset.code = text(row.Codigo);
-
-    circle.addEventListener("click", () => showDetail(row));
-    circle.addEventListener("keydown", (event) => {
-      if (event.key === "Enter" || event.key === " ") {
-        event.preventDefault();
-        showDetail(row);
-      }
+    const source = state.map.getSource("centres");
+    const zoom = await source.getClusterExpansionZoom(feature.properties.cluster_id);
+    state.map.easeTo({
+      center: feature.geometry.coordinates,
+      zoom,
+      duration: 450,
     });
-    circle.addEventListener("pointerenter", (event) => showTooltip(event, row));
-    circle.addEventListener("pointermove", (event) => showTooltip(event, row));
-    circle.addEventListener("pointerleave", hideTooltip);
-    circle.addEventListener("focus", () => {
-      const mapRect = document.querySelector("#map").getBoundingClientRect();
-      const svgRect = document.querySelector("#map-svg").getBoundingClientRect();
-      const event = {
-        clientX: svgRect.left + (x / MAP_BOUNDS.width) * svgRect.width,
-        clientY: svgRect.top + (y / MAP_BOUNDS.height) * svgRect.height,
-      };
-      showTooltip(event, row);
-      document.querySelector("#map-tooltip").style.left = `${event.clientX - mapRect.left + 12}px`;
-      document.querySelector("#map-tooltip").style.top = `${event.clientY - mapRect.top + 12}px`;
-    });
-    circle.addEventListener("blur", hideTooltip);
-
-    fragment.appendChild(circle);
-    mapped += 1;
   });
 
-  points.replaceChildren(fragment);
-  document.querySelector("#map-summary").textContent = `${mapped} resultados con coordenadas disponibles.`;
+  state.map.on("click", "unclustered-centres", (event) => {
+    const feature = event.features?.[0];
+    if (!feature) {
+      return;
+    }
+
+    new maplibregl.Popup({ offset: 12, maxWidth: "320px" })
+      .setLngLat(feature.geometry.coordinates)
+      .setDOMContent(popupContent(feature.properties))
+      .addTo(state.map);
+  });
+
+  ["clusters", "unclustered-centres"].forEach((layer) => {
+    state.map.on("mouseenter", layer, () => {
+      state.map.getCanvas().style.cursor = "pointer";
+    });
+    state.map.on("mouseleave", layer, () => {
+      state.map.getCanvas().style.cursor = "";
+    });
+  });
+}
+
+function initialiseMap() {
+  state.map = new maplibregl.Map({
+    container: "map",
+    style: "https://tiles.openfreemap.org/styles/liberty",
+    center: [-15.8, 28.35],
+    zoom: 6.55,
+    minZoom: 6,
+    maxZoom: 16,
+    maxBounds: CANARY_BOUNDS,
+    attributionControl: true,
+    cooperativeGestures: true,
+  });
+
+  state.map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
+  state.map.addControl(new maplibregl.FullscreenControl(), "top-right");
+
+  state.map.on("load", () => {
+    addMapLayers();
+    state.mapReady = true;
+    renderMap();
+  });
+
+  state.map.on("error", (event) => {
+    if (event?.error) {
+      document.querySelector("#map-summary").textContent = "No se pudo cargar la cartografía del mapa.";
+    }
+  });
+}
+
+function renderMap() {
+  const mappedRows = state.filtered.filter((row) => coordinates(row));
+  document.querySelector("#map-summary").textContent = `${mappedRows.length} resultados con coordenadas disponibles.`;
+
+  if (!state.mapReady) {
+    return;
+  }
+
+  state.map.getSource("centres").setData(featureCollection(mappedRows));
+
+  const island = document.querySelector("#island").value;
+  if (island && mappedRows.length > 0) {
+    const bounds = new maplibregl.LngLatBounds();
+    mappedRows.forEach((row) => bounds.extend(coordinates(row)));
+    state.map.fitBounds(bounds, { padding: 48, maxZoom: 10, duration: 450 });
+  } else {
+    state.map.fitBounds(CANARY_BOUNDS, { padding: 28, duration: 450 });
+  }
 }
 
 function render() {
@@ -186,12 +293,6 @@ function render() {
     ].join(" "));
 
     return (!query || haystack.includes(query)) && (!island || text(row.Isla) === island);
-  });
-
-  document.querySelectorAll(".islands [data-island]").forEach((shape) => {
-    const selected = island && normalized(shape.dataset.island) === normalized(island);
-    shape.classList.toggle("selected", Boolean(selected));
-    shape.classList.toggle("muted", Boolean(island && !selected));
   });
 
   const results = document.querySelector("#results");
@@ -232,7 +333,9 @@ async function main() {
   if (!response.ok) {
     throw new Error(`No se pudieron cargar los datos: ${response.status}`);
   }
+
   state.rows = await response.json();
+  state.rows.forEach((row) => state.rowsByCode.set(text(row.Codigo), row));
 
   const islands = [...new Set(state.rows.map((row) => text(row.Isla)).filter(Boolean))].sort();
   const select = document.querySelector("#island");
@@ -243,6 +346,7 @@ async function main() {
     select.appendChild(option);
   });
 
+  initialiseMap();
   document.querySelector("#search").addEventListener("input", render);
   select.addEventListener("change", render);
   render();
