@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "Si utiliza este conjunto de datos, cite el repositorio y las fuentes oficiales indicadas."
+title: "Listado de centros educativos de Canarias"
+type: dataset
+authors:
+  - name: "Área de Tecnología Educativa"
+    affiliation: "Consejería de Educación, Formación Profesional, Actividad Física y Deportes del Gobierno de Canarias"
+repository-code: "https://github.com/ateeducacion/listado-centros-educativos-canarias"
+url: "https://ateeducacion.github.io/listado-centros-educativos-canarias/"
+license: CC-BY-4.0
+keywords:
+  - centros educativos
+  - Canarias
+  - datos abiertos
+  - CEP
+  - EOEP
+  - CER
+  - inspección educativa
+abstract: >-
+  Conjunto de datos derivado y enriquecido a partir de fuentes del Gobierno
+  de Canarias. Reúne en un único CSV los centros educativos, los Centros del
+  Profesorado, los CER, los EOEP, las oficinas Medusa y las zonas de
+  inspección educativa, sin publicar nombres de inspectores.

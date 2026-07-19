@@ -1,0 +1,52 @@
+name: Update data
+
+on:
+  schedule:
+    - cron: "17 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Generate dataset
+        run: python scripts/update_data.py
+
+      - name: Validate dataset
+        run: python scripts/validate_data.py
+
+      - name: Create update pull request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: automation/update-centres
+          delete-branch: true
+          commit-message: "Update centres dataset"
+          title: "Update centres dataset"
+          body: |
+            ## Summary
+
+            Automated update generated from the current public datasets of the Gobierno de Canarias.
+
+            ## Validation
+
+            - `python scripts/update_data.py`
+            - `python scripts/validate_data.py`
+
+            The pull request must be reviewed before merging. Changes to CEP assignments or inspection zones should be checked against their stated sources.
+          labels: data,automated
