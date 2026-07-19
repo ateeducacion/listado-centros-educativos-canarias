@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Listado de centros educativos de Canarias</title>
   <meta name="description" content="Documentación y consulta del listado enriquecido de centros educativos de Canarias.">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIINfQ3ynhYh8voXnGCPgJxZtQXwM3i4aT0=" crossorigin="">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -54,6 +57,14 @@
           <tbody id="results"></tbody>
         </table>
       </div>
+      <p class="hint">Seleccione cualquier fila para consultar todos sus campos.</p>
+    </section>
+
+    <section>
+      <h2>Mapa</h2>
+      <p>El mapa muestra los resultados filtrados que tienen coordenadas. Utiliza Leaflet y la cartografía abierta de OpenStreetMap, sin claves de API.</p>
+      <div id="map" aria-label="Mapa de centros educativos de Canarias"></div>
+      <p id="map-summary" class="summary"></p>
     </section>
 
     <section>
@@ -77,12 +88,26 @@
       <h2>Fuentes, atribución y licencia</h2>
       <p>Información elaborada utilizando, entre otras, la obtenida del Gobierno de Canarias. Los datos han sido transformados y enriquecidos; esta publicación no es oficial ni implica respaldo del Gobierno de Canarias.</p>
       <p>El repositorio se distribuye bajo <a href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International</a>. Consulte el archivo <a href="https://github.com/ateeducacion/listado-centros-educativos-canarias/blob/main/LICENSE">LICENSE</a> y el archivo <a href="https://github.com/ateeducacion/listado-centros-educativos-canarias/blob/main/CITATION.cff">CITATION.cff</a>.</p>
+      <p>© colaboradores de <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>.</p>
     </section>
   </main>
+
+  <dialog id="detail-dialog">
+    <form method="dialog" class="dialog-header">
+      <div>
+        <p class="eyebrow dialog-eyebrow">Ficha del registro</p>
+        <h2 id="detail-title">Detalle</h2>
+      </div>
+      <button class="close-button" value="close" aria-label="Cerrar">×</button>
+    </form>
+    <div id="detail-content" class="detail-grid"></div>
+  </dialog>
 
   <footer>
     <div class="container">Área de Tecnología Educativa · Gobierno de Canarias</div>
   </footer>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
