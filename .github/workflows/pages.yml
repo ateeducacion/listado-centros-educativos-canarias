@@ -33,7 +33,7 @@ jobs:
           if [ -f centros.json ]; then cp centros.json _site/centros.json; else printf '[]\n' > _site/centros.json; fi
 
       - name: Configure Pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v6
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
