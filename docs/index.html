@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Listado de centros educativos de Canarias</title>
   <meta name="description" content="Documentación y consulta del listado enriquecido de centros educativos de Canarias.">
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.2/dist/maplibre-gl.css">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -59,26 +60,10 @@
 
     <section>
       <h2>Mapa de Canarias</h2>
-      <p>El mapa es una representación local y ligera del archipiélago. No descarga teselas, no utiliza servicios externos y no necesita claves de API.</p>
-      <div id="map" class="canary-map" aria-label="Mapa esquemático de centros educativos de Canarias">
-        <svg id="map-svg" viewBox="0 0 1000 430" role="img" aria-labelledby="map-title map-description">
-          <title id="map-title">Centros educativos de Canarias</title>
-          <desc id="map-description">Mapa esquemático interactivo del archipiélago canario con los centros filtrados.</desc>
-          <g class="islands" aria-hidden="true">
-            <path d="M68 174c20-22 58-24 79-4 15 14 13 37-5 49-23 16-61 10-78-10-10-12-8-25 4-35z" data-island="EL HIERRO"/>
-            <path d="M181 112c20-32 61-43 90-25 24 15 31 51 14 78-18 29-56 44-85 31-31-14-38-52-19-84z" data-island="LA PALMA"/>
-            <path d="M274 232c22-22 58-24 79-4 17 16 14 42-7 56-24 16-63 10-81-12-11-14-7-29 9-40z" data-island="LA GOMERA"/>
-            <path d="M386 156c31-38 90-48 131-23 34 21 44 66 23 104-24 43-82 65-128 44-48-22-59-82-26-125z" data-island="TENERIFE"/>
-            <path d="M565 205c34-31 87-36 122-10 31 23 36 67 12 101-28 40-86 52-128 25-43-28-46-81-6-116z" data-island="GRAN CANARIA"/>
-            <path d="M735 164c28-18 71-16 96 4 21 17 24 43 8 62-21 25-65 31-95 13-31-18-35-57-9-79z" data-island="FUERTEVENTURA"/>
-            <path d="M859 104c26-13 62-8 79 12 14 17 10 38-10 50-26 15-65 8-82-15-12-16-6-36 13-47z" data-island="LANZAROTE"/>
-            <path d="M928 68c10-8 26-7 34 2 7 8 4 18-6 23-12 6-27 2-33-8-4-7-2-12 5-17z" data-island="LA GRACIOSA"/>
-          </g>
-          <g id="map-points" class="map-points"></g>
-        </svg>
-        <div id="map-tooltip" class="map-tooltip" hidden></div>
-      </div>
+      <p>Mapa interactivo con cartografía vectorial, agrupación de centros y navegación limitada al archipiélago. No requiere claves de API.</p>
+      <div id="map" class="canary-map" aria-label="Mapa interactivo de centros educativos de Canarias"></div>
       <p id="map-summary" class="summary"></p>
+      <p class="hint">Pulse sobre un grupo para acercarse o sobre un centro para consultar su ficha completa.</p>
     </section>
 
     <section>
@@ -102,6 +87,7 @@
       <h2>Fuentes, atribución y licencia</h2>
       <p>Información elaborada utilizando, entre otras, la obtenida del Gobierno de Canarias. Los datos han sido transformados y enriquecidos; esta publicación no es oficial ni implica respaldo del Gobierno de Canarias.</p>
       <p>El repositorio se distribuye bajo <a href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International</a>. Consulte el archivo <a href="https://github.com/ateeducacion/listado-centros-educativos-canarias/blob/main/LICENSE">LICENSE</a> y el archivo <a href="https://github.com/ateeducacion/listado-centros-educativos-canarias/blob/main/CITATION.cff">CITATION.cff</a>.</p>
+      <p>Cartografía proporcionada por <a href="https://openfreemap.org/">OpenFreeMap</a>, basada en datos de <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>.</p>
     </section>
   </main>
 
@@ -119,6 +105,7 @@
   <footer>
     <div class="container">Área de Tecnología Educativa · Gobierno de Canarias</div>
   </footer>
+  <script src="https://unpkg.com/maplibre-gl@5.6.2/dist/maplibre-gl.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
