@@ -1,1 +1,113 @@
-Codigo,CentroProfesoresCodigo,CentroProfesoresNombre,URLWebCEP
+Codigo,Isla,Municipio,CentroProfesoresCodigo,CentroProfesoresNombre,URLWebCEP
+35005304,GRAN CANARIA,LAS PALMAS DE GRAN CANARIA,35707201,C.PROFES. TELDE,http://www.cepdetelde.org
+35008691,GRAN CANARIA,LAS PALMAS DE GRAN CANARIA,35707201,C.PROFES. TELDE,http://www.cepdetelde.org
+35009097,GRAN CANARIA,LAS PALMAS DE GRAN CANARIA,35707201,C.PROFES. TELDE,http://www.cepdetelde.org
+35009127,GRAN CANARIA,LAS PALMAS DE GRAN CANARIA,35707201,C.PROFES. TELDE,http://www.cepdetelde.org
+35009590,GRAN CANARIA,LAS PALMAS DE GRAN CANARIA,35707201,C.PROFES. TELDE,http://www.cepdetelde.org
+35010592,GRAN CANARIA,LAS PALMAS DE GRAN CANARIA,35707201,C.PROFES. TELDE,http://www.cepdetelde.org
+35014068,GRAN CANARIA,SANTA LUCÍA DE TIRAJANA,35707201,C.PROFES. TELDE,http://www.cepdetelde.org
+35810102,FUERTEVENTURA,PUERTO DEL ROSARIO,35707701,C.PROFES. GRAN TARAJAL,http://www.gobiernodecanarias.org/educacion/usr/c.profes.grantaraj
+38002818,TENERIFE,SANTA CRUZ DE TENERIFE,38700050,C.PROFES. LA LAGUNA,http://www.gobiernodecanarias.org/educacion/cep_laguna
+38004414,TENERIFE,EL ROSARIO,38706050,C.PROFES. SANTA CRUZ DE TENERIFE,http://www.gobiernodecanarias.org/educacion/cep_sc_tenerife
+38004438,TENERIFE,SANTA CRUZ DE TENERIFE,38700050,C.PROFES. LA LAGUNA,http://www.gobiernodecanarias.org/educacion/cep_laguna
+38004441,TENERIFE,EL ROSARIO,38706050,C.PROFES. SANTA CRUZ DE TENERIFE,http://www.gobiernodecanarias.org/educacion/cep_sc_tenerife
+38005157,TENERIFE,SANTA CRUZ DE TENERIFE,38700050,C.PROFES. LA LAGUNA,http://www.gobiernodecanarias.org/educacion/cep_laguna
+38006368,TENERIFE,SANTA CRUZ DE TENERIFE,38700050,C.PROFES. LA LAGUNA,http://www.gobiernodecanarias.org/educacion/cep_laguna
+38006381,TENERIFE,SANTA CRUZ DE TENERIFE,38700050,C.PROFES. LA LAGUNA,http://www.gobiernodecanarias.org/educacion/cep_laguna
+38006393,TENERIFE,SANTA CRUZ DE TENERIFE,38700050,C.PROFES. LA LAGUNA,http://www.gobiernodecanarias.org/educacion/cep_laguna
+38006824,TENERIFE,TACORONTE,38706050,C.PROFES. SANTA CRUZ DE TENERIFE,http://www.gobiernodecanarias.org/educacion/cep_sc_tenerife
+38009370,TENERIFE,SANTA CRUZ DE TENERIFE,38700050,C.PROFES. LA LAGUNA,http://www.gobiernodecanarias.org/educacion/cep_laguna
+38009503,TENERIFE,SANTA CRUZ DE TENERIFE,38700050,C.PROFES. LA LAGUNA,http://www.gobiernodecanarias.org/educacion/cep_laguna
+38009591,TENERIFE,SANTA CRUZ DE TENERIFE,38700050,C.PROFES. LA LAGUNA,http://www.gobiernodecanarias.org/educacion/cep_laguna
+38011637,TENERIFE,SANTA CRUZ DE TENERIFE,38700050,C.PROFES. LA LAGUNA,http://www.gobiernodecanarias.org/educacion/cep_laguna
+38015138,TENERIFE,SANTA CRUZ DE TENERIFE,38700050,C.PROFES. LA LAGUNA,http://www.gobiernodecanarias.org/educacion/cep_laguna
+38703701,TENERIFE,SANTA ÚRSULA,38700050,C.PROFES. LA LAGUNA,http://www.gobiernodecanarias.org/educacion/cep_laguna
+,EL HIERRO,EL PINAR DE EL HIERRO,38700140,C.PROFES. EL HIERRO,http://www.gobiernodecanarias.org/educacion/cep_hierro
+,EL HIERRO,FRONTERA,38700140,C.PROFES. EL HIERRO,http://www.gobiernodecanarias.org/educacion/cep_hierro
+,EL HIERRO,VALVERDE,38700140,C.PROFES. EL HIERRO,http://www.gobiernodecanarias.org/educacion/cep_hierro
+,FUERTEVENTURA,ANTIGUA,35700110,C.PROFES. PUERTO DEL ROSARIO,http://www.gobiernodecanarias.org/educacion/cep_puerto
+,FUERTEVENTURA,BETANCURIA,35700110,C.PROFES. PUERTO DEL ROSARIO,http://www.gobiernodecanarias.org/educacion/cep_puerto
+,FUERTEVENTURA,LA OLIVA,35700110,C.PROFES. PUERTO DEL ROSARIO,http://www.gobiernodecanarias.org/educacion/cep_puerto
+,FUERTEVENTURA,PUERTO DEL ROSARIO,35700110,C.PROFES. PUERTO DEL ROSARIO,http://www.gobiernodecanarias.org/educacion/cep_puerto
+,FUERTEVENTURA,PÁJARA,35707701,C.PROFES. GRAN TARAJAL,http://www.gobiernodecanarias.org/educacion/usr/c.profes.grantaraj
+,FUERTEVENTURA,TUINEJE,35707701,C.PROFES. GRAN TARAJAL,http://www.gobiernodecanarias.org/educacion/usr/c.profes.grantaraj
+,GRAN CANARIA,AGAETE,35700471,C.PROFES. GRAN CANARIA NOROESTE,http://www.ceparucas.com
+,GRAN CANARIA,AGÜIMES,35702341,C.PROFES. GRAN CANARIA SUR,http://www.centrodelprofesorado.com
+,GRAN CANARIA,ARTENARA,35700471,C.PROFES. GRAN CANARIA NOROESTE,http://www.ceparucas.com
+,GRAN CANARIA,ARUCAS,35700471,C.PROFES. GRAN CANARIA NOROESTE,http://www.ceparucas.com
+,GRAN CANARIA,FIRGAS,35700471,C.PROFES. GRAN CANARIA NOROESTE,http://www.ceparucas.com
+,GRAN CANARIA,GÁLDAR,35700471,C.PROFES. GRAN CANARIA NOROESTE,http://www.ceparucas.com
+,GRAN CANARIA,INGENIO,35702341,C.PROFES. GRAN CANARIA SUR,http://www.centrodelprofesorado.com
+,GRAN CANARIA,LA ALDEA DE SAN NICOLÁS,35700471,C.PROFES. GRAN CANARIA NOROESTE,http://www.ceparucas.com
+,GRAN CANARIA,LAS PALMAS DE GRAN CANARIA,35700468,C.PROFES. LAS PALMAS DE GRAN CANARIA,http://www.ceplaspalmas2.com
+,GRAN CANARIA,MOGÁN,35702341,C.PROFES. GRAN CANARIA SUR,http://www.centrodelprofesorado.com
+,GRAN CANARIA,MOYA,35700471,C.PROFES. GRAN CANARIA NOROESTE,http://www.ceparucas.com
+,GRAN CANARIA,SAN BARTOLOMÉ DE TIRAJANA,35702341,C.PROFES. GRAN CANARIA SUR,http://www.centrodelprofesorado.com
+,GRAN CANARIA,SANTA BRÍGIDA,35700468,C.PROFES. LAS PALMAS DE GRAN CANARIA,http://www.ceplaspalmas2.com
+,GRAN CANARIA,SANTA LUCÍA DE TIRAJANA,35702341,C.PROFES. GRAN CANARIA SUR,http://www.centrodelprofesorado.com
+,GRAN CANARIA,SANTA MARÍA DE GUÍA DE GRAN CANARIA,35700471,C.PROFES. GRAN CANARIA NOROESTE,http://www.ceparucas.com
+,GRAN CANARIA,TEJEDA,35700468,C.PROFES. LAS PALMAS DE GRAN CANARIA,http://www.ceplaspalmas2.com
+,GRAN CANARIA,TELDE,35707201,C.PROFES. TELDE,http://www.cepdetelde.org
+,GRAN CANARIA,TEROR,35700471,C.PROFES. GRAN CANARIA NOROESTE,http://www.ceparucas.com
+,GRAN CANARIA,VALLESECO,35700471,C.PROFES. GRAN CANARIA NOROESTE,http://www.ceparucas.com
+,GRAN CANARIA,VALSEQUILLO DE GRAN CANARIA,35707201,C.PROFES. TELDE,http://www.cepdetelde.org
+,GRAN CANARIA,VEGA DE SAN MATEO,35700468,C.PROFES. LAS PALMAS DE GRAN CANARIA,http://www.ceplaspalmas2.com
+,LA GOMERA,AGULO,38702566,C.PROFES. LA GOMERA,http://www.gobiernodecanarias.org/educacion/usr/ceplagomera
+,LA GOMERA,ALAJERÓ,38702566,C.PROFES. LA GOMERA,http://www.gobiernodecanarias.org/educacion/usr/ceplagomera
+,LA GOMERA,HERMIGUA,38702566,C.PROFES. LA GOMERA,http://www.gobiernodecanarias.org/educacion/usr/ceplagomera
+,LA GOMERA,SAN SEBASTIÁN DE LA GOMERA,38702566,C.PROFES. LA GOMERA,http://www.gobiernodecanarias.org/educacion/usr/ceplagomera
+,LA GOMERA,VALLE GRAN REY,38702566,C.PROFES. LA GOMERA,http://www.gobiernodecanarias.org/educacion/usr/ceplagomera
+,LA GOMERA,VALLEHERMOSO,38702566,C.PROFES. LA GOMERA,http://www.gobiernodecanarias.org/educacion/usr/ceplagomera
+,LA PALMA,BARLOVENTO,38700406,C.PROFES. DE LA PALMA,http://www.gobiernodecanarias.org/educacion/cep_sc_palma
+,LA PALMA,BREÑA ALTA,38700406,C.PROFES. DE LA PALMA,http://www.gobiernodecanarias.org/educacion/cep_sc_palma
+,LA PALMA,BREÑA BAJA,38700406,C.PROFES. DE LA PALMA,http://www.gobiernodecanarias.org/educacion/cep_sc_palma
+,LA PALMA,EL PASO,38700406,C.PROFES. DE LA PALMA,http://www.gobiernodecanarias.org/educacion/cep_sc_palma
+,LA PALMA,FUENCALIENTE DE LA PALMA,38700406,C.PROFES. DE LA PALMA,http://www.gobiernodecanarias.org/educacion/cep_sc_palma
+,LA PALMA,GARAFÍA,38700406,C.PROFES. DE LA PALMA,http://www.gobiernodecanarias.org/educacion/cep_sc_palma
+,LA PALMA,LOS LLANOS DE ARIDANE,38700406,C.PROFES. DE LA PALMA,http://www.gobiernodecanarias.org/educacion/cep_sc_palma
+,LA PALMA,PUNTAGORDA,38700406,C.PROFES. DE LA PALMA,http://www.gobiernodecanarias.org/educacion/cep_sc_palma
+,LA PALMA,PUNTALLANA,38700406,C.PROFES. DE LA PALMA,http://www.gobiernodecanarias.org/educacion/cep_sc_palma
+,LA PALMA,SAN ANDRÉS Y SAUCES,38700406,C.PROFES. DE LA PALMA,http://www.gobiernodecanarias.org/educacion/cep_sc_palma
+,LA PALMA,SANTA CRUZ DE LA PALMA,38700406,C.PROFES. DE LA PALMA,http://www.gobiernodecanarias.org/educacion/cep_sc_palma
+,LA PALMA,TAZACORTE,38700406,C.PROFES. DE LA PALMA,http://www.gobiernodecanarias.org/educacion/cep_sc_palma
+,LA PALMA,TIJARAFE,38700406,C.PROFES. DE LA PALMA,http://www.gobiernodecanarias.org/educacion/cep_sc_palma
+,LA PALMA,VILLA DE MAZO,38700406,C.PROFES. DE LA PALMA,http://www.gobiernodecanarias.org/educacion/cep_sc_palma
+,LANZAROTE,ARRECIFE,35700043,C.PROFES. LANZAROTE,http://www.gobiernodecanarias.org/educacion/cep_lanzarote
+,LANZAROTE,HARÍA,35700043,C.PROFES. LANZAROTE,http://www.gobiernodecanarias.org/educacion/cep_lanzarote
+,LANZAROTE,SAN BARTOLOMÉ,35700043,C.PROFES. LANZAROTE,http://www.gobiernodecanarias.org/educacion/cep_lanzarote
+,LANZAROTE,TEGUISE,35700043,C.PROFES. LANZAROTE,http://www.gobiernodecanarias.org/educacion/cep_lanzarote
+,LANZAROTE,TINAJO,35700043,C.PROFES. LANZAROTE,http://www.gobiernodecanarias.org/educacion/cep_lanzarote
+,LANZAROTE,TÍAS,35700043,C.PROFES. LANZAROTE,http://www.gobiernodecanarias.org/educacion/cep_lanzarote
+,LANZAROTE,YAIZA,35700043,C.PROFES. LANZAROTE,http://www.gobiernodecanarias.org/educacion/cep_lanzarote
+,TENERIFE,ADEJE,38700388,C.PROFES. TENERIFE SUR,http://www.gobiernodecanarias.org/educacion/cep_granadilla
+,TENERIFE,ARAFO,38706050,C.PROFES. SANTA CRUZ DE TENERIFE,http://www.gobiernodecanarias.org/educacion/cep_sc_tenerife
+,TENERIFE,ARICO,38700388,C.PROFES. TENERIFE SUR,http://www.gobiernodecanarias.org/educacion/cep_granadilla
+,TENERIFE,ARONA,38700388,C.PROFES. TENERIFE SUR,http://www.gobiernodecanarias.org/educacion/cep_granadilla
+,TENERIFE,BUENAVISTA DEL NORTE,38700391,C.PROFES. NORTE DE TENERIFE,http://www.gobiernodecanarias.org/educacion/cep_orotava
+,TENERIFE,CANDELARIA,38706050,C.PROFES. SANTA CRUZ DE TENERIFE,http://www.gobiernodecanarias.org/educacion/cep_sc_tenerife
+,TENERIFE,EL ROSARIO,38700050,C.PROFES. LA LAGUNA,http://www.gobiernodecanarias.org/educacion/cep_laguna
+,TENERIFE,EL SAUZAL,38700050,C.PROFES. LA LAGUNA,http://www.gobiernodecanarias.org/educacion/cep_laguna
+,TENERIFE,EL TANQUE,38700391,C.PROFES. NORTE DE TENERIFE,http://www.gobiernodecanarias.org/educacion/cep_orotava
+,TENERIFE,FASNIA,38706050,C.PROFES. SANTA CRUZ DE TENERIFE,http://www.gobiernodecanarias.org/educacion/cep_sc_tenerife
+,TENERIFE,GARACHICO,38700391,C.PROFES. NORTE DE TENERIFE,http://www.gobiernodecanarias.org/educacion/cep_orotava
+,TENERIFE,GRANADILLA DE ABONA,38700388,C.PROFES. TENERIFE SUR,http://www.gobiernodecanarias.org/educacion/cep_granadilla
+,TENERIFE,GUÍA DE ISORA,38700388,C.PROFES. TENERIFE SUR,http://www.gobiernodecanarias.org/educacion/cep_granadilla
+,TENERIFE,GÜÍMAR,38706050,C.PROFES. SANTA CRUZ DE TENERIFE,http://www.gobiernodecanarias.org/educacion/cep_sc_tenerife
+,TENERIFE,ICOD DE LOS VINOS,38700391,C.PROFES. NORTE DE TENERIFE,http://www.gobiernodecanarias.org/educacion/cep_orotava
+,TENERIFE,LA GUANCHA,38700391,C.PROFES. NORTE DE TENERIFE,http://www.gobiernodecanarias.org/educacion/cep_orotava
+,TENERIFE,LA MATANZA DE ACENTEJO,38700050,C.PROFES. LA LAGUNA,http://www.gobiernodecanarias.org/educacion/cep_laguna
+,TENERIFE,LA OROTAVA,38700391,C.PROFES. NORTE DE TENERIFE,http://www.gobiernodecanarias.org/educacion/cep_orotava
+,TENERIFE,LA VICTORIA DE ACENTEJO,38700050,C.PROFES. LA LAGUNA,http://www.gobiernodecanarias.org/educacion/cep_laguna
+,TENERIFE,LOS REALEJOS,38700391,C.PROFES. NORTE DE TENERIFE,http://www.gobiernodecanarias.org/educacion/cep_orotava
+,TENERIFE,LOS SILOS,38700391,C.PROFES. NORTE DE TENERIFE,http://www.gobiernodecanarias.org/educacion/cep_orotava
+,TENERIFE,PUERTO DE LA CRUZ,38700391,C.PROFES. NORTE DE TENERIFE,http://www.gobiernodecanarias.org/educacion/cep_orotava
+,TENERIFE,SAN CRISTÓBAL DE LA LAGUNA,38700050,C.PROFES. LA LAGUNA,http://www.gobiernodecanarias.org/educacion/cep_laguna
+,TENERIFE,SAN JUAN DE LA RAMBLA,38700391,C.PROFES. NORTE DE TENERIFE,http://www.gobiernodecanarias.org/educacion/cep_orotava
+,TENERIFE,SAN MIGUEL DE ABONA,38700388,C.PROFES. TENERIFE SUR,http://www.gobiernodecanarias.org/educacion/cep_granadilla
+,TENERIFE,SANTA CRUZ DE TENERIFE,38706050,C.PROFES. SANTA CRUZ DE TENERIFE,http://www.gobiernodecanarias.org/educacion/cep_sc_tenerife
+,TENERIFE,SANTA ÚRSULA,38700391,C.PROFES. NORTE DE TENERIFE,http://www.gobiernodecanarias.org/educacion/cep_orotava
+,TENERIFE,SANTIAGO DEL TEIDE,38700388,C.PROFES. TENERIFE SUR,http://www.gobiernodecanarias.org/educacion/cep_granadilla
+,TENERIFE,TACORONTE,38700050,C.PROFES. LA LAGUNA,http://www.gobiernodecanarias.org/educacion/cep_laguna
+,TENERIFE,TEGUESTE,38700050,C.PROFES. LA LAGUNA,http://www.gobiernodecanarias.org/educacion/cep_laguna
+,TENERIFE,VILAFLOR,38700388,C.PROFES. TENERIFE SUR,http://www.gobiernodecanarias.org/educacion/cep_granadilla
+,TENERIFE,VILAFLOR DE CHASNA,38700388,C.PROFES. TENERIFE SUR,http://www.gobiernodecanarias.org/educacion/cep_granadilla
