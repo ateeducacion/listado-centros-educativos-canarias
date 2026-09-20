@@ -40,6 +40,11 @@ Entre las columnas añadidas o normalizadas se encuentran:
 | `ZonaInspeccionNombre` | Denominación de la zona de inspección. |
 | `FuenteCEP` | Procedencia de la asignación del CEP. |
 | `FuenteZonaInspeccion` | Procedencia de la zona de inspección. |
+| `Activo` | `1` si el centro está vigente y `0` si se conserva solo por trazabilidad histórica. |
+| `FechaAlta` / `FechaBaja` | Vigencia conocida cuando una fuente oficial permite determinarla. |
+| `CodigoSustituidoPor` | Código del centro que sustituye a uno dado de baja. |
+| `FuenteCentro` | Procedencia del registro base. |
+| `FuenteEstado` / `FuenteEstadoURL` | Fuente pública usada para una corrección de vigencia. |
 
 No se publica el nombre de la persona inspectora. Solo se incorpora la identificación de la zona de inspección.
 
@@ -50,6 +55,9 @@ La generación consulta, como mínimo, los siguientes conjuntos de datos:
 1. **Centros Educativos de Canarias**, publicado en el portal de datos abiertos del Gobierno de Canarias.
 2. **Zonas de Inspección Educativa de Canarias**, del que se utilizan la relación entre centros y zonas y el catálogo de zonas.
 3. Datos de apoyo mantenidos en este repositorio para completar las asignaciones de CEP que todavía no ofrece la fuente principal.
+4. Correcciones de vigencia revisadas y versionadas cuando el BOC o el directorio oficial de centros se adelantan a la publicación de OpenData.
+
+El BOC se usa como **detector de posibles cambios**, no como una fuente que modifique el catálogo de forma automática. El workflow genera un informe y cualquier corrección se incorpora de forma explícita con su procedencia.
 
 La automatización localiza los recursos mediante la API CKAN del portal, evitando depender permanentemente de identificadores de recurso concretos.
 
@@ -59,6 +67,8 @@ La automatización localiza los recursos mediante la API CKAN del portal, evitan
 python -m pip install -r requirements.txt
 python scripts/update_data.py
 python scripts/validate_data.py
+python scripts/export_consumers.py
+python scripts/check_boc.py
 ```
 
 El proceso realiza estas operaciones:
@@ -69,9 +79,11 @@ El proceso realiza estas operaciones:
 4. completa los datos de CEP con la tabla curada;
 5. conserva los datos de EOEP y CER disponibles;
 6. incorpora los servicios educativos que deban formar parte del listado único;
-7. genera `centros.csv` y `centros.json`;
-8. valida códigos, duplicados, relaciones y estructura;
-9. genera la documentación estática de GitHub Pages.
+7. aplica únicamente correcciones de estado revisadas y con fuente pública;
+8. genera `centros.csv` y `centros.json`;
+9. valida códigos, duplicados, sustituciones, relaciones y estructura;
+10. genera contratos reducidos para otros aplicativos;
+11. comprueba publicaciones recientes del BOC y genera un informe de posibles desfases.
 
 ## Actualización automática
 
@@ -83,6 +95,16 @@ El workflow nocturno consulta las fuentes oficiales. Cuando detecta cambios:
 - abre o actualiza un pull request con el resumen de altas, bajas y modificaciones.
 
 Los cambios no se incorporan directamente a `main`: deben revisarse y fusionarse mediante pull request.
+
+## Contratos para otros aplicativos
+
+GitHub Pages publica, además del conjunto completo:
+
+- `centros.min.json`: catálogo ligero con código, denominación, isla, municipio, tipo y estado; pensado para formularios y aplicaciones web.
+- `centros-distancias.csv`: únicamente centros activos con coordenadas válidas, con el esquema que necesita el proyecto de distancias.
+- `manifest.json`: versión de esquema, recuentos y SHA-256 de los artefactos anteriores.
+
+Los consumidores deben usar estos contratos en lugar de volver a consultar directamente las fuentes upstream.
 
 ## Sitio web
 
