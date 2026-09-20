@@ -13,10 +13,11 @@
     <div class="container">
       <p class="eyebrow">Datos abiertos · Canarias</p>
       <h1>Listado de centros educativos de Canarias</h1>
-      <p class="lead">Un único CSV, actualizado automáticamente y enriquecido con CEP, CER, EOEP y zonas de inspección educativa.</p>
+      <p class="lead">Catálogo abierto, versionado y actualizado automáticamente, con formatos para consulta humana y consumo por aplicaciones.</p>
       <div class="actions">
         <a class="button" href="centros.csv">Descargar CSV</a>
-        <a class="button secondary" href="centros.json">Descargar JSON</a>
+        <a class="button secondary" href="centros.json">JSON completo</a>
+        <a class="button secondary" href="centros.min.json">JSON ligero</a>
         <a class="button secondary" href="https://github.com/ateeducacion/listado-centros-educativos-canarias">Ver repositorio</a>
       </div>
     </div>
@@ -27,6 +28,72 @@
       <h2>Qué contiene</h2>
       <p>El archivo <code>centros.csv</code> parte del conjunto oficial de centros educativos y añade información que aparece vacía o distribuida en otras fuentes: código y nombre del Centro del Profesorado, CER, EOEP y zona de inspección. No se publica el nombre de la persona inspectora.</p>
       <p>Los CEP, CER, EOEP y oficinas Medusa se mantienen dentro del mismo listado, identificados mediante las columnas de tipo y etapa, para evitar fragmentar la información en varios archivos.</p>
+    </section>
+
+    <section>
+      <h2>Archivos publicados</h2>
+      <p>El sitio publica varios formatos derivados del mismo catálogo. Use el archivo que mejor se adapte al tipo de consumo; los formatos reducidos se generan automáticamente y no se mantienen a mano.</p>
+
+      <div class="file-accordion">
+        <details>
+          <summary>
+            <span><code>centros.csv</code></span>
+            <span class="file-kind">Catálogo completo · CSV</span>
+          </summary>
+          <div class="file-description">
+            <p>Archivo principal y versionado del repositorio. Contiene todos los campos disponibles y enriquecidos: datos generales, CEP, CER, EOEP, zona de inspección, estado de vigencia y procedencia de las correcciones.</p>
+            <p>Es la opción adecuada para hojas de cálculo, tratamiento masivo y análisis de datos.</p>
+            <a href="centros.csv">Descargar <code>centros.csv</code></a>
+          </div>
+        </details>
+
+        <details>
+          <summary>
+            <span><code>centros.json</code></span>
+            <span class="file-kind">Catálogo completo · JSON</span>
+          </summary>
+          <div class="file-description">
+            <p>Representación JSON del catálogo completo, con los mismos registros y campos que el CSV. Este es el archivo que utiliza el visualizador de esta página.</p>
+            <p>Es útil cuando una aplicación necesita acceder a toda la información de cada centro sin interpretar CSV.</p>
+            <a href="centros.json">Abrir <code>centros.json</code></a>
+          </div>
+        </details>
+
+        <details>
+          <summary>
+            <span><code>centros.min.json</code></span>
+            <span class="file-kind">Catálogo ligero · JSON</span>
+          </summary>
+          <div class="file-description">
+            <p>Contrato reducido pensado para formularios y aplicaciones. Publica únicamente código, denominación, isla, municipio, tipo y estado activo/inactivo.</p>
+            <p>Es la opción recomendada cuando solo se necesita seleccionar o identificar centros sin descargar el catálogo completo.</p>
+            <a href="centros.min.json">Abrir <code>centros.min.json</code></a>
+          </div>
+        </details>
+
+        <details>
+          <summary>
+            <span><code>centros-distancias.csv</code></span>
+            <span class="file-kind">Centros geolocalizables · CSV</span>
+          </summary>
+          <div class="file-description">
+            <p>Contrato específico para el proyecto de distancias. Incluye únicamente centros activos con coordenadas válidas y los campos necesarios para construir la matriz de rutas.</p>
+            <p>No debe utilizarse como listado histórico completo porque excluye registros inactivos y centros sin coordenadas utilizables.</p>
+            <a href="centros-distancias.csv">Descargar <code>centros-distancias.csv</code></a>
+          </div>
+        </details>
+
+        <details>
+          <summary>
+            <span><code>manifest.json</code></span>
+            <span class="file-kind">Metadatos e integridad · JSON</span>
+          </summary>
+          <div class="file-description">
+            <p>Describe la versión del contrato, los recuentos de registros y los SHA-256 de los artefactos reducidos. Los consumidores automáticos pueden usarlo para comprobar si el catálogo ha cambiado y verificar la integridad de una descarga.</p>
+            <a href="manifest.json">Abrir <code>manifest.json</code></a>
+          </div>
+        </details>
+      </div>
     </section>
 
     <section>
@@ -50,12 +117,13 @@
               <th>Isla</th>
               <th>CEP</th>
               <th>Zona de inspección</th>
+              <th>Estado</th>
             </tr>
           </thead>
           <tbody id="results"></tbody>
         </table>
       </div>
-      <p class="hint">Seleccione cualquier fila para consultar todos sus campos.</p>
+      <p class="hint">Seleccione cualquier fila para consultar todos sus campos. Los registros inactivos se conservan por trazabilidad histórica y se muestran atenuados y en cursiva.</p>
     </section>
 
     <section>
@@ -63,7 +131,7 @@
       <p>Mapa interactivo con cartografía vectorial, agrupación de centros y navegación limitada al archipiélago. No requiere claves de API.</p>
       <div id="map" class="canary-map" aria-label="Mapa interactivo de centros educativos de Canarias"></div>
       <p id="map-summary" class="summary"></p>
-      <p class="hint">Pulse sobre un grupo para acercarse o sobre un centro para consultar su ficha completa.</p>
+      <p class="hint">Pulse sobre un grupo para acercarse o sobre un centro para consultar su ficha completa. Los puntos de centros inactivos se muestran con un tono diferenciado.</p>
     </section>
 
     <section>
@@ -75,6 +143,7 @@
         <li>Se completan las asignaciones de CEP mediante una tabla curada y versionada.</li>
         <li>Se conservan y normalizan los datos de CER y EOEP disponibles.</li>
         <li>Se generan y validan <code>centros.csv</code> y <code>centros.json</code>.</li>
+        <li>Se derivan <code>centros.min.json</code>, <code>centros-distancias.csv</code> y <code>manifest.json</code> para consumidores específicos.</li>
       </ol>
     </section>
 
