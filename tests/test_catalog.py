@@ -22,6 +22,7 @@ def load_script(name: str):
 
 export_consumers = load_script("export_consumers")
 check_boc = load_script("check_boc")
+directory_diff = load_script("directory_diff")
 update_data = load_script("update_data")
 
 
@@ -139,6 +140,104 @@ class CatalogueTest(unittest.TestCase):
             with csv_path.open(encoding="utf-8", newline="") as handle:
                 exported = list(csv.DictReader(handle))
             self.assertEqual(["35000011"], [row["Codigo"] for row in exported])
+
+    def test_directory_parser_extracts_stable_public_fields(self) -> None:
+        document = """
+        <table>
+          <tr><th>Código</th><td>38017731</td></tr>
+          <tr><th>Denominación</th><td>CIFP EN ICOD DE LOS VINOS</td></tr>
+          <tr><th>Municipio</th><td>ICOD DE LOS VINOS</td></tr>
+          <tr>
+            <th>Centro del Profesorado que le corresponde</th>
+            <td>38700391 - C.PROFES. NORTE DE TENERIFE</td>
+          </tr>
+          <tr>
+            <th>EOEP al que pertenece</th>
+            <td>38702577 - E.O.E.P. YCODEN-DAUTE</td>
+          </tr>
+          <tr><th>Código zona de inspección</th><td>703</td></tr>
+        </table>
+        """
+        parsed = directory_diff.parse_directory_html(document)
+        self.assertEqual("38017731", parsed["code"])
+        self.assertEqual("CIFP EN ICOD DE LOS VINOS", parsed["name"])
+        self.assertEqual("38700391", parsed["cep_code"])
+        self.assertEqual("38702577", parsed["eoep_code"])
+        self.assertEqual("703", parsed["inspection_zone_code"])
+
+    def test_directory_comparison_normalizes_transport_fields(self) -> None:
+        catalogue = {
+            "Denominacion": "CEIP EJEMPLO",
+            "Telefono": "922-123456 y 922-654321",
+            "CorreoElectronico": "CENTRO@GOBIERNODECANARIAS.ORG",
+            "PaginaWeb": "http://example.org/centro/",
+        }
+        directory = {
+            "name": "ceip ejemplo",
+            "phone": "922 654 321 / 922 123 456",
+            "email": "centro@gobiernodecanarias.org",
+            "website": "https://example.org/centro",
+        }
+        self.assertEqual([], directory_diff.compare_fields(catalogue, directory))
+
+        directory["name"] = "CEIP NUEVO NOMBRE"
+        changes = directory_diff.compare_fields(catalogue, directory)
+        self.assertEqual("Denominacion", changes[0]["field"])
+
+    def test_directory_report_does_not_infer_inactive_state(self) -> None:
+        catalogue = {
+            "35000011": {
+                "Codigo": "35000011",
+                "Denominacion": "CEIP EJEMPLO",
+                "Activo": "1",
+            }
+        }
+        report = directory_diff.build_report(
+            catalogue,
+            [
+                {
+                    "code": "35000011",
+                    "present": False,
+                    "fields": {},
+                    "error": "",
+                },
+                {
+                    "code": "38017731",
+                    "present": True,
+                    "fields": {
+                        "code": "38017731",
+                        "name": "CIFP EN ICOD DE LOS VINOS",
+                        "municipality": "ICOD DE LOS VINOS",
+                        "island": "TENERIFE",
+                    },
+                    "error": "",
+                },
+            ],
+            "candidates",
+        )
+        missing = report["missing_from_directory"][0]
+        self.assertTrue(missing["catalogue_active"])
+        self.assertEqual("38017731", report["directory_only"][0]["code"])
+
+    def test_directory_rotating_batch_limits_requests(self) -> None:
+        codes = [f"{35000000 + index:08d}" for index in range(320)]
+        batch, number, count = directory_diff.rotating_batch(
+            codes,
+            150,
+            rotation_key=1,
+        )
+        self.assertEqual(150, len(batch))
+        self.assertEqual(2, number)
+        self.assertEqual(3, count)
+        self.assertEqual(codes[150:300], batch)
+
+    def test_directory_explicit_codes_override_scope(self) -> None:
+        selected = directory_diff.select_codes(
+            {"35000011": {"Codigo": "35000011"}},
+            "all",
+            "38017731, 35000011, invalid",
+        )
+        self.assertEqual(["35000011", "38017731"], selected)
 
     def test_boc_detector_extracts_codes_and_compares_names(self) -> None:
         text = (

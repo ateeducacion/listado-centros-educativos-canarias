@@ -114,8 +114,9 @@ jobs:
             - `python scripts/export_consumers.py`
             - `python scripts/check_boc.py`
 
-            El informe del BOC es únicamente un detector de posibles desfases:
-            nunca modifica el catálogo automáticamente.
+            El informe del BOC es un detector de posibles desfases y puede
+            contrastar únicamente los códigos encontrados en publicaciones
+            candidatas. Nunca modifica el catálogo automáticamente.
 
             Este PR debe revisarse antes de fusionarse.
           labels: data,automated
