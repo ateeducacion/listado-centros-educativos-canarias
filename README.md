@@ -45,6 +45,7 @@ Entre las columnas añadidas o normalizadas se encuentran:
 | `FechaAlta` / `FechaBaja` | Vigencia conocida cuando una fuente oficial permite determinarla. |
 | `CodigoSustituidoPor` | Código del centro que sustituye a uno dado de baja. |
 | `FuenteCentro` | Procedencia del registro base: `Datos Abiertos de Canarias`, `data/additional_centres.csv` o `Directorio operativo de centros educativos`. |
+| `CamposCorregidos` | Campos cuyo valor procede de una corrección revisada en `data/centre_field_overrides.csv` y no de la fuente original. |
 | `FuenteEstado` / `FuenteEstadoURL` | Fuente pública usada para una corrección de vigencia. |
 
 No se publica el nombre de la persona inspectora. Solo se incorpora la identificación de la zona de inspección.
@@ -56,7 +57,7 @@ La generación consulta, como mínimo, los siguientes conjuntos de datos:
 1. **Centros Educativos de Canarias**, publicado en el portal de datos abiertos del Gobierno de Canarias.
 2. **Zonas de Inspección Educativa de Canarias**, del que se utilizan la relación entre centros y zonas y el catálogo de zonas.
 3. Datos de apoyo mantenidos en este repositorio para completar las asignaciones de CEP que todavía no ofrece la fuente principal. Las webs públicas de los CEP se contrastan con el directorio oficial de Centros del Profesorado del Gobierno de Canarias.
-4. Correcciones de vigencia revisadas y versionadas cuando el BOC o el directorio oficial de centros se adelantan a la publicación de OpenData.
+4. Correcciones revisadas y versionadas cuando el BOC o el directorio oficial de centros se adelantan a la publicación de OpenData: de vigencia en `data/centre_overrides.csv` y de campos concretos en `data/centre_field_overrides.csv`.
 5. **Directorio operativo de centros educativos**, el buscador público de la Consejería. Se usa para detectar diferencias respecto al catálogo versionado y para incorporar los centros que todavía no publica OpenData.
 
 El BOC se usa como **detector de posibles cambios**, no como una fuente que modifique el catálogo de forma automática. El workflow genera un informe y cualquier corrección se incorpora de forma explícita con su procedencia. La dirección de cada anuncio se construye a partir del identificador `BOC-A-…` del feed, porque el enlace que publica el RSS ya no se sirve; las publicaciones que no puedan leerse se cuentan en el informe en lugar de interrumpirlo.
@@ -69,7 +70,7 @@ El buscador responde a una consulta sin filtros con el listado completo del dire
 .../.content/widgets-buscador-centros-openlayers/get-centro-detalle.jsp?codigo=XXXXXXXX
 ```
 
-La página `resultados/detalle` ya no incluye los datos en el HTML servido: los carga el navegador, de modo que raspar esa página devuelve fichas vacías. Estos widgets son la parte pública de la misma aplicación y **no son un contrato estable**: pueden cambiar, y por eso la comparación registra sus errores en lugar de modificar datos de forma automática. El CKAN DataStore interno que usa el buscador sigue sin utilizarse.
+La página `resultados/detalle` ya no incluye los datos en el HTML servido: los carga el navegador, de modo que leer esa página desde un cliente sin JavaScript devuelve fichas vacías. Estos widgets son la parte pública de la misma aplicación y **no son un contrato estable**: pueden cambiar, y por eso la comparación registra sus errores en lugar de modificar datos de forma automática. El CKAN DataStore interno que usa el buscador sigue sin utilizarse.
 
 La automatización localiza los recursos OpenData mediante la API CKAN del portal, evitando depender permanentemente de identificadores de recurso concretos.
 
@@ -88,6 +89,9 @@ python scripts/directory_diff.py --scope all --workers 1 --delay 1
 
 # Regenerar los centros que solo publica el directorio operativo:
 python scripts/import_directory_centres.py --workers 1 --delay 1
+
+# Convertir en correcciones las diferencias del último informe, campo a campo:
+python scripts/apply_directory_fields.py --fields Telefono,CorreoElectronico
 ```
 
 El proceso realiza estas operaciones:
@@ -98,7 +102,7 @@ El proceso realiza estas operaciones:
 4. completa los datos de CEP con la tabla curada;
 5. conserva los datos de EOEP y CER disponibles;
 6. incorpora los servicios educativos y los centros del directorio operativo que deban formar parte del listado único;
-7. aplica únicamente correcciones de estado revisadas y con fuente pública;
+7. aplica únicamente correcciones revisadas y con fuente pública, de vigencia y de campos concretos;
 8. genera `centros.csv` y `centros.json`;
 9. valida códigos, duplicados, sustituciones, relaciones y estructura;
 10. genera contratos reducidos para otros aplicativos;
@@ -120,6 +124,20 @@ La auditoría amplia del directorio operativo **no se ejecuta automáticamente**
 
 Los cambios no se incorporan directamente a `main`: deben revisarse y fusionarse mediante pull request. La ausencia de un código en el directorio **no marca un centro como inactivo automáticamente**; una baja requiere una fuente explícita y revisable.
 
+## Correcciones por campo
+
+Cuando una fuente publica un valor equivocado y otra fuente pública permite comprobarlo, la corrección se versiona en `data/centre_field_overrides.csv`:
+
+```text
+Codigo,Campo,Valor,Fuente,FuenteURL
+```
+
+Cada fila sustituye un único valor y exige procedencia. El mecanismo es deliberadamente simple: no deduce campos dependientes, de modo que corregir la zona de inspección exige también las filas de su denominación y su fuente. El archivo no puede tocar los campos de vigencia (`Activo`, `FechaAlta`, `FechaBaja`, `CodigoSustituidoPor`, `FuenteEstado`, `FuenteEstadoURL`), que pertenecen a `data/centre_overrides.csv`, y la generación falla si una fila nombra una columna inexistente o si la corrección no llega al catálogo.
+
+La columna `CamposCorregidos` enumera, en cada registro, los campos que proceden de una corrección, para que un consumidor pueda distinguirlos del valor original.
+
+`scripts/apply_directory_fields.py` convierte en filas de este archivo las diferencias del último informe de `directory_diff.py`, pero solo para los campos que se le indiquen de forma explícita: ninguna diferencia se incorpora sola.
+
 ## Contratos para otros aplicativos
 
 GitHub Pages publica, además del conjunto completo:
@@ -139,7 +157,7 @@ La documentación de GitHub Pages explica las fuentes, el modelo de datos y el p
 - Las asignaciones de CEP procedentes de datos de apoyo pueden quedar desactualizadas si se modifica el ámbito territorial de un CEP.
 - Algunos centros pueden no tener zona de inspección en el conjunto oficial.
 - La ausencia de un valor no implica necesariamente que el servicio no exista; puede indicar que la fuente no lo publica.
-- Las transformaciones automáticas no corrigen silenciosamente conflictos: se registran como errores o advertencias para su revisión.
+- Las transformaciones automáticas no corrigen silenciosamente conflictos: se registran como errores o advertencias para su revisión, y cualquier corrección aplicada queda nombrada en `CamposCorregidos` con su fuente.
 - La consulta sin filtros del buscador lista todos los códigos publicados, de modo que los centros ausentes del catálogo se detectan sin necesidad de otra fuente. Aun así, depende de una aplicación ajena que puede cambiar sin aviso.
 - Los centros incorporados desde el directorio operativo no tienen zona de inspección en el conjunto oficial; solo se conserva la que publica su propia ficha, cuando existe.
 - La presencia o ausencia de una ficha en el directorio operativo no se considera una señal suficiente para activar o desactivar un centro.
