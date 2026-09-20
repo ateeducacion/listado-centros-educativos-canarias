@@ -25,6 +25,9 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v7
 
+      - name: Check consumer exporter syntax
+        run: python -m py_compile scripts/export_consumers.py
+
       - name: Generate consumer artefacts
         run: python scripts/export_consumers.py
 
