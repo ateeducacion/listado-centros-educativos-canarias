@@ -103,7 +103,7 @@ class DirectoryHtmlParser(HTMLParser):
         attrs: list[tuple[str, str | None]],
     ) -> None:
         del attrs
-        if "tr" == tag:
+        if tag == "tr":
             self.row = []
         elif tag in {"th", "td"} and self.row is not None:
             self.cell = []
@@ -122,15 +122,15 @@ class DirectoryHtmlParser(HTMLParser):
         if tag in {"th", "td"} and self.cell is not None and self.row is not None:
             self.row.append(collapse(self.cell))
             self.cell = None
-        elif "tr" == tag and self.row is not None:
+        elif tag == "tr" and self.row is not None:
             cells = [value for value in self.row if value]
             if len(cells) >= 2:
                 self.pairs.append((cells[0], " | ".join(cells[1:])))
             self.row = None
-        elif "dt" == tag and self.term is not None:
+        elif tag == "dt" and self.term is not None:
             self.last_term = collapse(self.term)
             self.term = None
-        elif "dd" == tag and self.term is not None and self.last_term:
+        elif tag == "dd" and self.term is not None and self.last_term:
             self.pairs.append((self.last_term, collapse(self.term)))
             self.term = None
 
@@ -211,13 +211,13 @@ def normalize_url(value: Any) -> str:
 
 def comparable(value: Any, kind: str) -> str:
     """Return a stable comparable representation."""
-    if "code" == kind:
+    if kind == "code":
         return extract_code(value)
-    if "phone" == kind:
+    if kind == "phone":
         return normalize_phone(value)
-    if "email" == kind:
+    if kind == "email":
         return normalize_email(value)
-    if "url" == kind:
+    if kind == "url":
         return normalize_url(value)
     return fold(value)
 
@@ -270,7 +270,7 @@ def candidate_codes(catalogue: dict[str, dict[str, str]]) -> set[str]:
     for code, row in catalogue.items():
         if clean(row.get("FuenteCentro")) != OFFICIAL_SOURCE:
             codes.add(code)
-        if clean(row.get("FuenteEstado")) or "0" == clean(row.get("Activo")):
+        if clean(row.get("FuenteEstado")) or clean(row.get("Activo")) == "0":
             codes.add(code)
 
     return codes
@@ -293,7 +293,7 @@ def select_codes(
         return sorted(values)
 
     codes = candidate_codes(catalogue)
-    if "all" == scope:
+    if scope == "all":
         codes.update(catalogue)
     if not codes:
         raise RuntimeError("No centre codes selected for directory comparison")
@@ -320,9 +320,9 @@ def fetch_directory(code: str, timeout: float = 30.0) -> dict[str, Any]:
                 params={"codigo": code},
                 timeout=timeout,
             )
-            if 404 == response.status_code:
+            if response.status_code == 404:
                 return {"code": code, "present": False, "fields": {}, "error": ""}
-            if 429 == response.status_code or response.status_code >= 500:
+            if response.status_code == 429 or response.status_code >= 500:
                 raise requests.HTTPError(
                     f"HTTP {response.status_code}",
                     response=response,
@@ -461,7 +461,7 @@ def build_report(
             ),
         },
         "coverage": {
-            "complete_for_known_codes": "all" == scope,
+            "complete_for_known_codes": scope == "all",
             "new_code_discovery": (
                 "New codes require another reviewed source, such as the BOC "
                 "watch, until a stable public bulk operational index exists."
