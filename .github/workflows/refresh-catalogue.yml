@@ -1,0 +1,121 @@
+name: Refresh catalogue
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "data/**"
+      - "scripts/update_data.py"
+      - "scripts/validate_data.py"
+      - "scripts/export_consumers.py"
+      - "scripts/check_boc.py"
+      - "requirements.txt"
+      - ".github/workflows/refresh-catalogue.yml"
+  schedule:
+    - cron: "37 3 * * *"
+      timezone: "Europe/Madrid"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: refresh-catalogue
+  cancel-in-progress: true
+
+jobs:
+  generate:
+    name: Generate and validate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Generate catalogue
+        run: python scripts/update_data.py
+
+      - name: Validate catalogue
+        run: python scripts/validate_data.py
+
+      - name: Generate consumer artefacts
+        run: python scripts/export_consumers.py
+
+      - name: Check recent BOC changes
+        run: python scripts/check_boc.py
+        continue-on-error: true
+
+      - name: Upload generated catalogue
+        uses: actions/upload-artifact@v7
+        with:
+          name: catalogue-refresh
+          path: |
+            centros.csv
+            centros.json
+            dist/boc-watch.json
+            dist/boc-watch.md
+          if-no-files-found: error
+          retention-days: 7
+
+  propose:
+    name: Open data pull request
+    needs: generate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Download generated catalogue
+        uses: actions/download-artifact@v7
+        with:
+          name: catalogue-refresh
+          path: .
+
+      - name: Create update pull request
+        uses: peter-evans/create-pull-request@v8
+        with:
+          branch: automation/update-centres
+          delete-branch: true
+          commit-message: "Actualizar catálogo de centros"
+          title: "Actualizar catálogo de centros"
+          body: |
+            ## Resumen
+
+            Actualización automática generada a partir de las fuentes públicas
+            actuales del Gobierno de Canarias y de las correcciones revisadas
+            y versionadas del repositorio.
+
+            ## Archivos regenerados
+
+            - `centros.csv`
+            - `centros.json`
+
+            Los contratos para consumidores se regeneran durante el despliegue
+            de GitHub Pages a partir de estos archivos.
+
+            ## Validación
+
+            - `python scripts/update_data.py`
+            - `python scripts/validate_data.py`
+            - `python scripts/export_consumers.py`
+            - `python scripts/check_boc.py`
+
+            El informe del BOC es únicamente un detector de posibles desfases:
+            nunca modifica el catálogo automáticamente.
+
+            Este PR debe revisarse antes de fusionarse.
+          labels: data,automated
