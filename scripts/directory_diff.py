@@ -188,7 +188,13 @@ def parse_directory_html(document: str) -> dict[str, str]:
 
 def normalize_phone(value: Any) -> str:
     """Normalize one or more phone numbers."""
-    return "|".join(sorted(re.findall(r"\d{6,}", clean(value))))
+    parts = re.split(r"\s*(?:/|;|,|\by\b)\s*", clean(value), flags=re.IGNORECASE)
+    numbers = []
+    for part in parts:
+        digits = re.sub(r"\D", "", part)
+        if len(digits) >= 6:
+            numbers.append(digits)
+    return "|".join(sorted(numbers))
 
 
 def normalize_email(value: Any) -> str:
