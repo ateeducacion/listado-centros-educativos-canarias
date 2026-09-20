@@ -32,7 +32,7 @@ jobs:
         run: python -m pip install -r requirements.txt
 
       - name: Compare every known centre code
-        run: python scripts/directory_diff.py --scope all --workers 4 --timeout 20
+        run: python scripts/directory_diff.py --scope all --batch-size 150 --workers 1 --delay 1 --timeout 20
         continue-on-error: true
 
       - name: Upload directory report
