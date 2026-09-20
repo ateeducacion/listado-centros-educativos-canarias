@@ -4,6 +4,9 @@ const state = {
   map: null,
   mapReady: false,
   rowsByCode: new Map(),
+  page: 1,
+  pageSize: 50,
+  manifest: null,
 };
 
 const CANARY_BOUNDS = [[-18.55, 27.45], [-13.15, 29.55]];
@@ -16,6 +19,36 @@ const normalized = (value) => text(value)
 const isActive = (row) => !["0", "false", "no", "inactive", "inactivo"]
   .includes(normalized(row.Activo || "1"));
 const statusLabel = (row) => (isActive(row) ? "Activo" : "Inactivo");
+
+function formatCatalogueDate(value) {
+  if (!value) {
+    return "No disponible";
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "No disponible";
+  }
+
+  return new Intl.DateTimeFormat("es-ES", {
+    dateStyle: "long",
+    timeStyle: "short",
+    timeZone: "Atlantic/Canary",
+  }).format(date);
+}
+
+function updateCatalogueMeta() {
+  const active = state.rows.filter((row) => isActive(row)).length;
+  const inactive = state.rows.length - active;
+  document.querySelector("#catalogue-records").textContent =
+    state.rows.length.toLocaleString("es-ES");
+  document.querySelector("#catalogue-active").textContent =
+    active.toLocaleString("es-ES");
+  document.querySelector("#catalogue-inactive").textContent =
+    inactive.toLocaleString("es-ES");
+  document.querySelector("#catalogue-updated").textContent =
+    formatCatalogueDate(state.manifest?.catalogue_updated_at);
+}
 
 function coordinates(row) {
   const latitude = Number.parseFloat(text(row.Latitud).replace(",", "."));
@@ -293,9 +326,29 @@ function renderMap() {
   }
 }
 
+function totalPages() {
+  return Math.max(1, Math.ceil(state.filtered.length / state.pageSize));
+}
+
+function renderPagination() {
+  const pages = totalPages();
+  state.page = Math.min(Math.max(1, state.page), pages);
+
+  document.querySelector("#page-status").textContent =
+    `Página ${state.page.toLocaleString("es-ES")} de ${pages.toLocaleString("es-ES")}`;
+
+  const atStart = state.page <= 1;
+  const atEnd = state.page >= pages;
+  document.querySelector("#first-page").disabled = atStart;
+  document.querySelector("#previous-page").disabled = atStart;
+  document.querySelector("#next-page").disabled = atEnd;
+  document.querySelector("#last-page").disabled = atEnd;
+}
+
 function render() {
   const query = normalized(document.querySelector("#search").value);
   const island = document.querySelector("#island").value;
+  const statusFilter = document.querySelector("#status-filter").value;
 
   state.filtered = state.rows.filter((row) => {
     const haystack = normalized([
@@ -311,11 +364,26 @@ function render() {
       row.ZonaInspeccionNombre,
     ].join(" "));
 
-    return (!query || haystack.includes(query)) && (!island || text(row.Isla) === island);
+    const statusMatches =
+      !statusFilter
+      || (statusFilter === "active" && isActive(row))
+      || (statusFilter === "inactive" && !isActive(row));
+
+    return (
+      (!query || haystack.includes(query))
+      && (!island || text(row.Isla) === island)
+      && statusMatches
+    );
   });
 
+  const pages = totalPages();
+  state.page = Math.min(Math.max(1, state.page), pages);
+  const start = (state.page - 1) * state.pageSize;
+  const end = Math.min(start + state.pageSize, state.filtered.length);
+  const visibleRows = state.filtered.slice(start, end);
+
   const results = document.querySelector("#results");
-  results.replaceChildren(...state.filtered.slice(0, 250).map((row) => {
+  results.replaceChildren(...visibleRows.map((row) => {
     const tr = document.createElement("tr");
     const active = isActive(row);
     tr.tabIndex = 0;
@@ -358,19 +426,34 @@ function render() {
 
   const inactiveCount = state.filtered.filter((row) => !isActive(row)).length;
   const inactiveSummary = inactiveCount > 0 ? ` · ${inactiveCount} inactivos` : "";
+  const rangeSummary = state.filtered.length > 0
+    ? ` · mostrando ${(start + 1).toLocaleString("es-ES")}–${end.toLocaleString("es-ES")}`
+    : "";
   document.querySelector("#summary").textContent =
-    `${state.filtered.length} resultados${inactiveSummary}. Se muestran como máximo 250 filas; el mapa incluye todos los resultados filtrados con coordenadas.`;
+    `${state.filtered.length.toLocaleString("es-ES")} resultados${inactiveSummary}${rangeSummary}.`;
+  renderPagination();
   renderMap();
 }
 
 async function main() {
-  const response = await fetch("centros.json", { cache: "no-store" });
-  if (!response.ok) {
-    throw new Error(`No se pudieron cargar los datos: ${response.status}`);
+  const [catalogueResponse, manifestResponse] = await Promise.all([
+    fetch("centros.json", { cache: "no-store" }),
+    fetch("manifest.json", { cache: "no-store" }),
+  ]);
+
+  if (!catalogueResponse.ok) {
+    throw new Error(
+      `No se pudieron cargar los datos: ${catalogueResponse.status}`,
+    );
   }
 
-  state.rows = await response.json();
+  state.rows = await catalogueResponse.json();
+  if (manifestResponse.ok) {
+    state.manifest = await manifestResponse.json();
+  }
+
   state.rows.forEach((row) => state.rowsByCode.set(text(row.Codigo), row));
+  updateCatalogueMeta();
 
   const islands = [...new Set(state.rows.map((row) => text(row.Isla)).filter(Boolean))].sort();
   const select = document.querySelector("#island");
@@ -381,9 +464,37 @@ async function main() {
     select.appendChild(option);
   });
 
+  const resetAndRender = () => {
+    state.page = 1;
+    render();
+  };
+
   initialiseMap();
-  document.querySelector("#search").addEventListener("input", render);
-  select.addEventListener("change", render);
+  document.querySelector("#search").addEventListener("input", resetAndRender);
+  select.addEventListener("change", resetAndRender);
+  document.querySelector("#status-filter").addEventListener("change", resetAndRender);
+  document.querySelector("#page-size").addEventListener("change", (event) => {
+    state.pageSize = Number.parseInt(event.target.value, 10) || 50;
+    state.page = 1;
+    render();
+  });
+  document.querySelector("#first-page").addEventListener("click", () => {
+    state.page = 1;
+    render();
+  });
+  document.querySelector("#previous-page").addEventListener("click", () => {
+    state.page = Math.max(1, state.page - 1);
+    render();
+  });
+  document.querySelector("#next-page").addEventListener("click", () => {
+    state.page = Math.min(totalPages(), state.page + 1);
+    render();
+  });
+  document.querySelector("#last-page").addEventListener("click", () => {
+    state.page = totalPages();
+    render();
+  });
+
   render();
 }
 

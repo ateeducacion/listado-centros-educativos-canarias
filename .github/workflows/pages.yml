@@ -24,9 +24,16 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - name: Check consumer exporter syntax
         run: python -m py_compile scripts/export_consumers.py
+
+      - name: Read catalogue version
+        run: |
+          echo "CATALOGUE_UPDATED_AT=$(git log -1 --format=%cI -- centros.csv centros.json)" >> "$GITHUB_ENV"
+          echo "CATALOGUE_COMMIT=$(git log -1 --format=%H -- centros.csv centros.json)" >> "$GITHUB_ENV"
 
       - name: Generate consumer artefacts
         run: python scripts/export_consumers.py
