@@ -1,6 +1,16 @@
 name: Update data
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - "data/**"
+      - "scripts/update_data.py"
+      - "scripts/validate_data.py"
+      - "scripts/export_consumers.py"
+      - "tests/**"
+      - ".github/workflows/update-data.yml"
   schedule:
     - cron: "17 2 * * *"
   workflow_dispatch:
