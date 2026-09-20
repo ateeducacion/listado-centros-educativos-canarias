@@ -156,6 +156,54 @@ def active_from_row(row: dict[str, str]) -> bool:
     }
 
 
+def validate_curated_materialization(
+    catalogue_rows: list[dict[str, str]],
+) -> None:
+    """Ensure curated sources and lifecycle overrides reached the catalogue."""
+    catalogue = {
+        row["Codigo"]: row
+        for row in catalogue_rows
+        if row.get("Codigo")
+    }
+
+    _, additional_rows = read_csv(DATA_DIR / "additional_centres.csv")
+    for row in additional_rows:
+        code = clean(row.get("Codigo")).strip()
+        if code and code not in catalogue:
+            fail(
+                "Curated centre is missing from committed catalogue: "
+                f"{code}"
+            )
+
+    _, override_rows = read_csv(DATA_DIR / "centre_overrides.csv")
+    fields = (
+        "Activo",
+        "FechaAlta",
+        "FechaBaja",
+        "CodigoSustituidoPor",
+        "FuenteEstado",
+        "FuenteEstadoURL",
+    )
+    for override in override_rows:
+        code = clean(override.get("Codigo")).strip()
+        if not code:
+            continue
+        source = catalogue.get(code)
+        if source is None:
+            fail(
+                "Centre override is missing from committed catalogue: "
+                f"{code}"
+            )
+        for field in fields:
+            expected = clean(override.get(field))
+            actual = clean(source.get(field))
+            if actual != expected:
+                fail(
+                    f"Centre override {code} was not materialized for "
+                    f"{field}: {actual!r} != {expected!r}"
+                )
+
+
 def validate_min_json(
     payload: Any,
     catalogue_rows: list[dict[str, str]],
@@ -293,6 +341,7 @@ def main() -> None:
 
     validate_source_csv_files()
     _, catalogue_rows = validate_catalogue_pair()
+    validate_curated_materialization(catalogue_rows)
     print(
         "Validated committed artefacts: "
         f"{len(catalogue_rows)} records and "
