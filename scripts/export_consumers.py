@@ -84,8 +84,7 @@ def build_min_json(rows: list[dict[str, str]], destination: Path) -> int:
     ]
     payload.sort(key=lambda item: (str(item["name"]).casefold(), str(item["code"])))
     destination.write_text(
-        json.dumps(payload, ensure_ascii=False, separators=(",", ":")) + "
-",
+        json.dumps(payload, ensure_ascii=False, separators=(",", ":")) + "\n",
         encoding="utf-8",
     )
     return len(payload)
@@ -132,8 +131,7 @@ def main() -> None:
         },
     }
     MANIFEST.write_text(
-        json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True) + "
-",
+        json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
     print(
