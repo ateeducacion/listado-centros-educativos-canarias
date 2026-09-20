@@ -280,6 +280,26 @@ def candidate_codes(catalogue: dict[str, dict[str, str]]) -> set[str]:
     return codes
 
 
+def rotating_batch(
+    codes: list[str],
+    batch_size: int,
+    rotation_key: int | None = None,
+) -> tuple[list[str], int, int]:
+    """Return one deterministic rotating batch of centre codes."""
+    if batch_size <= 0 or batch_size >= len(codes):
+        return codes, 1, 1
+
+    total_batches = (len(codes) + batch_size - 1) // batch_size
+    if rotation_key is None:
+        now = datetime.now(UTC).isocalendar()
+        rotation_key = (now.year * 53) + now.week
+
+    batch_index = rotation_key % total_batches
+    start = batch_index * batch_size
+    end = min(start + batch_size, len(codes))
+    return codes[start:end], batch_index + 1, total_batches
+
+
 def select_codes(
     catalogue: dict[str, dict[str, str]],
     scope: str,
@@ -601,27 +621,32 @@ def main() -> None:
         default="candidates",
     )
     parser.add_argument("--codes", default="")
-    parser.add_argument("--workers", type=int, default=4)
+    parser.add_argument("--workers", type=int, default=1)
     parser.add_argument("--timeout", type=float, default=30.0)
+    parser.add_argument("--delay", type=float, default=0.0)
+    parser.add_argument("--batch-size", type=int, default=0)
+    parser.add_argument("--rotation-key", type=int)
     parser.add_argument("--limit", type=int, default=0)
     args = parser.parse_args()
 
     catalogue = load_catalogue()
     codes = select_codes(catalogue, args.scope, args.codes)
+    codes, batch_number, batch_count = rotating_batch(
+        codes,
+        args.batch_size,
+        args.rotation_key,
+    )
     if args.limit > 0:
         codes = codes[: args.limit]
 
     checks: list[dict[str, Any]] = []
     workers = max(1, min(args.workers, 8))
-    with ThreadPoolExecutor(max_workers=workers) as executor:
-        futures = {
-            executor.submit(fetch_directory, code, args.timeout): code
-            for code in codes
-        }
-        for future in as_completed(futures):
-            code = futures[future]
+    delay = max(0.0, args.delay)
+
+    if 1 == workers:
+        for index, code in enumerate(codes):
             try:
-                checks.append(future.result())
+                checks.append(fetch_directory(code, args.timeout))
             except Exception as exc:  # pragma: no cover
                 checks.append(
                     {
@@ -631,8 +656,36 @@ def main() -> None:
                         "error": f"{type(exc).__name__}: {exc}",
                     }
                 )
+            if delay > 0 and index + 1 < len(codes):
+                time.sleep(delay)
+    else:
+        with ThreadPoolExecutor(max_workers=workers) as executor:
+            futures = {
+                executor.submit(fetch_directory, code, args.timeout): code
+                for code in codes
+            }
+            for future in as_completed(futures):
+                code = futures[future]
+                try:
+                    checks.append(future.result())
+                except Exception as exc:  # pragma: no cover
+                    checks.append(
+                        {
+                            "code": code,
+                            "present": False,
+                            "fields": {},
+                            "error": f"{type(exc).__name__}: {exc}",
+                        }
+                    )
 
     report = build_report(catalogue, checks, args.scope)
+    report["batch"] = {
+        "number": batch_number,
+        "count": batch_count,
+        "size": len(codes),
+        "delay_seconds": delay,
+        "workers": workers,
+    }
     write_report(report)
     print(
         "Directory diff: "
