@@ -334,10 +334,15 @@ def request_session() -> requests.Session:
     return session
 
 
-def fetch_directory(code: str, timeout: float = 30.0) -> dict[str, Any]:
+def fetch_directory(
+    code: str,
+    timeout: float = 30.0,
+    attempts: int = 1,
+) -> dict[str, Any]:
     """Fetch and parse one public directory detail page."""
     last_error = ""
-    for attempt in range(3):
+    attempt_count = max(1, min(attempts, 3))
+    for attempt in range(attempt_count):
         try:
             response = request_session().get(
                 DETAIL_URL,
@@ -378,7 +383,7 @@ def fetch_directory(code: str, timeout: float = 30.0) -> dict[str, Any]:
         except requests.RequestException as exc:
             last_error = f"{type(exc).__name__}: {exc}"
 
-        if attempt < 2:
+        if attempt + 1 < attempt_count:
             time.sleep(0.5 * (2**attempt))
 
     return {
@@ -624,6 +629,7 @@ def main() -> None:
     parser.add_argument("--workers", type=int, default=1)
     parser.add_argument("--timeout", type=float, default=30.0)
     parser.add_argument("--delay", type=float, default=0.0)
+    parser.add_argument("--attempts", type=int, default=1)
     parser.add_argument("--batch-size", type=int, default=0)
     parser.add_argument("--rotation-key", type=int)
     parser.add_argument("--limit", type=int, default=0)
@@ -646,7 +652,7 @@ def main() -> None:
     if workers == 1:
         for index, code in enumerate(codes):
             try:
-                checks.append(fetch_directory(code, args.timeout))
+                checks.append(fetch_directory(code, args.timeout, args.attempts))
             except Exception as exc:  # pragma: no cover
                 checks.append(
                     {
@@ -661,7 +667,7 @@ def main() -> None:
     else:
         with ThreadPoolExecutor(max_workers=workers) as executor:
             futures = {
-                executor.submit(fetch_directory, code, args.timeout): code
+                executor.submit(fetch_directory, code, args.timeout, args.attempts): code
                 for code in codes
             }
             for future in as_completed(futures):
