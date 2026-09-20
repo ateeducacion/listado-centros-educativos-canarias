@@ -6,6 +6,7 @@ from __future__ import annotations
 import csv
 import hashlib
 import json
+import os
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -112,9 +113,14 @@ def main() -> None:
     distance_count = build_distances_csv(rows, DISTANCES_CSV)
     active_count = sum(1 for row in rows if is_active(row))
 
+    catalogue_updated_at = os.environ.get("CATALOGUE_UPDATED_AT", "").strip()
+    catalogue_commit = os.environ.get("CATALOGUE_COMMIT", "").strip()
+
     manifest = {
         "schema_version": 1,
         "generated_at": datetime.now(UTC).replace(microsecond=0).isoformat(),
+        "catalogue_updated_at": catalogue_updated_at or None,
+        "catalogue_commit": catalogue_commit or None,
         "records": len(rows),
         "active_records": active_count,
         "catalogue_records": catalogue_count,
