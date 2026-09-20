@@ -166,14 +166,15 @@ def validate_curated_materialization(
         if row.get("Codigo")
     }
 
-    _, additional_rows = read_csv(DATA_DIR / "additional_centres.csv")
-    for row in additional_rows:
-        code = clean(row.get("Codigo")).strip()
-        if code and code not in catalogue:
-            fail(
-                "Curated centre is missing from committed catalogue: "
-                f"{code}"
-            )
+    for name in ("additional_centres.csv", "directory_centres.csv"):
+        _, curated_rows = read_csv(DATA_DIR / name)
+        for row in curated_rows:
+            code = clean(row.get("Codigo")).strip()
+            if code and code not in catalogue:
+                fail(
+                    f"Curated centre from data/{name} is missing from committed "
+                    f"catalogue: {code}"
+                )
 
     _, override_rows = read_csv(DATA_DIR / "centre_overrides.csv")
     fields = (

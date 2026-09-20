@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import html
 import json
 import os
 import re
@@ -13,7 +14,6 @@ import time
 import unicodedata
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import UTC, datetime
-from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
@@ -33,109 +33,85 @@ SEARCH_URL = (
     "https://www.gobiernodecanarias.org/educacion/centroseducativos/"
     "buscador-centros-openlayers/"
 )
-DETAIL_URL = SEARCH_URL + "resultados/detalle"
+WIDGETS_URL = (
+    "https://www.gobiernodecanarias.org/educacion/centroseducativos/"
+    ".content/widgets-buscador-centros-openlayers/"
+)
+INDEX_URL = WIDGETS_URL + "get-todos-centros.jsp"
+MARKERS_URL = WIDGETS_URL + "get-centros.jsp"
+DETAIL_URL = WIDGETS_URL + "get-centro-detalle.jsp"
 USER_AGENT = "listado-centros-educativos-canarias/1.0"
 OFFICIAL_SOURCE = "Datos Abiertos de Canarias"
 CODE_RE = re.compile(r"\b\d{8}\b")
 
-LABELS = {
-    "codigo": "code",
-    "denominacion": "name",
-    "tipo de centro": "centre_type",
-    "direccion": "address",
-    "localidad": "locality",
-    "municipio": "municipality",
-    "provincia": "province",
-    "isla": "island",
-    "codigo postal": "postal_code",
-    "telefonos": "phone",
-    "correo electronico": "email",
-    "web del centro": "website",
-    "naturaleza": "nature",
-    "tipologia": "typology",
-    "titular": "holder",
-    "centro del profesorado que le corresponde": "cep",
-    "centro cer": "cer",
-    "centro de destino": "destination",
-    "eoep al que pertenece": "eoep",
-    "codigo zona de inspeccion": "inspection_zone_code",
+# The search application filters an unfiltered query with every value empty.
+EMPTY_FILTERS = json.dumps(
+    {
+        key: {"value": ""}
+        for key in (
+            "comedor",
+            "transporte",
+            "desayuno",
+            "apertura",
+            "vacanteFP",
+            "atencionEducativa",
+            "provincia",
+            "isla",
+            "municipio",
+            "centro",
+            "tipoCentro",
+            "naturaleza",
+            "grupoEnsenanza",
+            "familia",
+            "nivel",
+            "ciclo",
+            "estudio",
+            "modalidad",
+        )
+    }
+)
+
+# Fields published in the "Otros" block of a detail card. The inspector name and
+# the guard day are deliberately ignored: only the zone identifier is kept.
+DETAIL_LABELS = {
+    "zona de inspeccion": "inspection_zone_code",
+    "cep al que pertenece": "cep_code",
+    "centro del profesorado que le corresponde": "cep_code",
+    "eoep": "eoep_code",
+    "eoep al que pertenece": "eoep_code",
+    "centro cer al que pertenece": "cer_code",
+    "centro cepa al que pertenece": "cepa_code",
+    "centro de destino": "destination_code",
 }
 
 COMPARISONS = (
     ("name", "Denominacion", "text"),
-    ("centre_type", "DescripcionEtapaCentro", "text"),
+    ("stage", "DesEtapaCentro", "text"),
     ("address", "Direccion", "text"),
-    ("locality", "Localidad", "text"),
     ("municipality", "Municipio", "text"),
-    ("province", "Provincia", "text"),
-    ("island", "Isla", "text"),
     ("postal_code", "CodigoPostal", "text"),
     ("phone", "Telefono", "phone"),
+    ("fax", "Fax", "phone"),
     ("email", "CorreoElectronico", "email"),
     ("website", "PaginaWeb", "url"),
-    ("nature", "Naturaleza", "text"),
-    ("typology", "TipoCentro", "text"),
-    ("holder", "Titular", "text"),
+    ("concert", "Concierto", "text"),
+    ("latitude", "Latitud", "coord"),
+    ("longitude", "Longitud", "coord"),
     ("cep_code", "CentroProfesoresCodigo", "code"),
     ("cer_code", "CentroCER", "code"),
     ("destination_code", "CentroDestino", "code"),
     ("eoep_code", "EOEP", "code"),
-    ("inspection_zone_code", "ZonaInspeccionCodigo", "code"),
+    ("cepa_code", "CentroCepaAlQuePertenece", "code"),
+    ("inspection_zone_code", "ZonaInspeccionCodigo", "zone"),
 )
 
+SEPARATOR = "\x00"
 _thread_local = threading.local()
 
 
-class DirectoryHtmlParser(HTMLParser):
-    """Extract label/value pairs from the public directory detail page."""
-
-    def __init__(self) -> None:
-        super().__init__()
-        self.pairs: list[tuple[str, str]] = []
-        self.row: list[str] | None = None
-        self.cell: list[str] | None = None
-        self.term: list[str] | None = None
-        self.last_term = ""
-
-    def handle_starttag(
-        self,
-        tag: str,
-        attrs: list[tuple[str, str | None]],
-    ) -> None:
-        del attrs
-        if tag == "tr":
-            self.row = []
-        elif tag in {"th", "td"} and self.row is not None:
-            self.cell = []
-        elif tag == "dt" or (tag == "dd" and self.last_term):
-            self.term = []
-
-    def handle_data(self, data: str) -> None:
-        if self.cell is not None:
-            self.cell.append(data)
-        elif self.term is not None:
-            self.term.append(data)
-
-    def handle_endtag(self, tag: str) -> None:
-        if tag in {"th", "td"} and self.cell is not None and self.row is not None:
-            self.row.append(collapse(self.cell))
-            self.cell = None
-        elif tag == "tr" and self.row is not None:
-            cells = [value for value in self.row if value]
-            if len(cells) >= 2:
-                self.pairs.append((cells[0], " | ".join(cells[1:])))
-            self.row = None
-        elif tag == "dt" and self.term is not None:
-            self.last_term = collapse(self.term)
-            self.term = None
-        elif tag == "dd" and self.term is not None and self.last_term:
-            self.pairs.append((self.last_term, collapse(self.term)))
-            self.term = None
-
-
-def collapse(parts: list[str]) -> str:
-    """Collapse HTML text nodes into one readable value."""
-    return " ".join(" ".join(parts).split())
+def collapse(value: str) -> str:
+    """Collapse whitespace into one readable value."""
+    return " ".join(value.split())
 
 
 def clean(value: Any) -> str:
@@ -152,36 +128,87 @@ def fold(value: Any) -> str:
     return " ".join(normalized.casefold().split())
 
 
-def label_key(value: str) -> str:
-    """Normalize a human-readable field label."""
-    return fold(value).rstrip(":").strip()
-
-
 def extract_code(value: Any) -> str:
     """Return the first eight-digit centre code found in a value."""
     match = CODE_RE.search(clean(value))
     return match.group(0) if match else ""
 
 
+def extract_zone(value: Any) -> str:
+    """Return the inspection zone identifier, discarding the inspector name."""
+    match = re.match(r"\s*(\d+)", clean(value))
+    return match.group(1) if match else ""
+
+
+def fragment_text(fragment: str) -> str:
+    """Return the readable text of an HTML fragment, marking line breaks."""
+    fragment = re.sub(r"(?i)<br\s*/?>", SEPARATOR, fragment)
+    fragment = re.sub(r"(?s)<!--.*?-->", "", fragment)
+    return html.unescape(re.sub(r"<[^>]+>", "", fragment))
+
+
 def parse_directory_html(document: str) -> dict[str, str]:
-    """Parse stable fields from one public centre detail page."""
-    parser = DirectoryHtmlParser()
-    parser.feed(document)
+    """Parse stable fields from one public directory detail card."""
+    document = re.sub(r"(?s)<script.*?</script>", "", document)
+    header = re.search(r'(?s)id="centro-cabecera">(.*?)</div>', document)
+    if not header:
+        return {}
 
     result: dict[str, str] = {}
-    for label, value in parser.pairs:
-        canonical = LABELS.get(label_key(label))
-        if canonical and canonical not in result:
-            result[canonical] = clean(value)
-
-    for source, target in (
-        ("cep", "cep_code"),
-        ("cer", "cer_code"),
-        ("destination", "destination_code"),
-        ("eoep", "eoep_code"),
+    block = header.group(1)
+    for pattern, key in (
+        (r"(?s)<a[^>]*>(.*?)</a>", "name"),
+        (r"(?s)<strong>(.*?)</strong>", "concert"),
     ):
-        if source in result:
-            result[target] = extract_code(result[source])
+        match = re.search(pattern, block)
+        if match:
+            result[key] = collapse(fragment_text(match.group(1)))
+
+    match = re.search(r"(?s)</b>\s*-\s*(\d{8})", block)
+    if match:
+        result["code"] = match.group(1)
+
+    address_block = re.search(r'(?s)id="denominacion">(.*?)</span>', document)
+    if address_block:
+        lines = [
+            collapse(part)
+            for part in fragment_text(address_block.group(1)).split(SEPARATOR)
+        ]
+        lines = [line for line in lines if line]
+        if lines and fold(lines[0]).startswith("direccion"):
+            lines = lines[1:]
+        if lines:
+            match = re.match(r"(?s)^(.*?)\s*-\s*(\d{5})$", lines[0])
+            if match:
+                result["address"] = collapse(match.group(1))
+                result["postal_code"] = match.group(2)
+            else:
+                result["address"] = lines[0]
+        if len(lines) > 1:
+            # The card prints the municipality under the street address; the
+            # locality inside the municipality is not published.
+            result["municipality"] = lines[1]
+
+    contact = document[document.find('id="content-1"') :]
+    for pattern, key in (
+        (r"(?s)<b>Tel</b>\s*-\s*([^<]+)", "phone"),
+        (r"(?s)<b>Fax</b>\s*-\s*([^<]+)", "fax"),
+        (r'mailto:([^"]+)"', "email"),
+        (r'(?s)<a[^>]*href="(https?://[^"]+)"[^>]*>(?!\s*<)', "website"),
+    ):
+        match = re.search(pattern, contact)
+        if match:
+            result[key] = collapse(html.unescape(match.group(1)))
+
+    for label, value in re.findall(
+        r"(?s)<li[^>]*>\s*<b>(.*?)</b>\s*:\s*(.*?)</li>",
+        document,
+    ):
+        key = DETAIL_LABELS.get(fold(fragment_text(label)))
+        if not key or key in result:
+            continue
+        text = collapse(fragment_text(value))
+        result[key] = extract_zone(text) if key.endswith("zone_code") else text
 
     return result
 
@@ -213,16 +240,31 @@ def normalize_url(value: Any) -> str:
     return base + (f"?{parsed.query}" if parsed.query else "")
 
 
+def normalize_coordinate(value: Any) -> str:
+    """Round a coordinate to about one metre so precision noise is ignored."""
+    raw = clean(value).replace(",", ".")
+    if not raw:
+        return ""
+    try:
+        return f"{float(raw):.5f}"
+    except ValueError:
+        return raw
+
+
 def comparable(value: Any, kind: str) -> str:
     """Return a stable comparable representation."""
     if kind == "code":
         return extract_code(value)
+    if kind == "zone":
+        return extract_zone(value)
     if kind == "phone":
         return normalize_phone(value)
     if kind == "email":
         return normalize_email(value)
     if kind == "url":
         return normalize_url(value)
+    if kind == "coord":
+        return normalize_coordinate(value)
     return fold(value)
 
 
@@ -304,8 +346,9 @@ def select_codes(
     catalogue: dict[str, dict[str, str]],
     scope: str,
     explicit_codes: str,
+    directory_codes: set[str] | None = None,
 ) -> list[str]:
-    """Select codes for a candidate or full comparison."""
+    """Select the codes whose detail card is fetched one by one."""
     if explicit_codes:
         values = {
             value.strip()
@@ -319,6 +362,7 @@ def select_codes(
     codes = candidate_codes(catalogue)
     if scope == "all":
         codes.update(catalogue)
+        codes.update(directory_codes or ())
     if not codes:
         raise RuntimeError("No centre codes selected for directory comparison")
     return sorted(codes)
@@ -334,23 +378,75 @@ def request_session() -> requests.Session:
     return session
 
 
+def post_json(url: str, data: dict[str, str], timeout: float) -> Any:
+    """Post one unfiltered query to a search widget and decode its payload."""
+    response = request_session().post(url, data=data, timeout=timeout)
+    response.raise_for_status()
+    return json.loads(response.text.strip())
+
+
+def directory_index(timeout: float = 60.0) -> dict[str, dict[str, str]]:
+    """Return every centre published by the directory, keyed by code.
+
+    Two unfiltered queries cover the whole directory: the results listing adds
+    contact data and the map layer adds coordinates and the centre stage.
+    """
+    index: dict[str, dict[str, str]] = {}
+
+    listing = post_json(INDEX_URL, {"filtros": EMPTY_FILTERS, "pagina": "1"}, timeout)
+    for row in listing.get("centros", []):
+        code = clean(row.get("Codigo"))
+        if not CODE_RE.fullmatch(code):
+            continue
+        index[code] = {
+            "code": code,
+            "name": clean(row.get("Denominacion")),
+            "municipality": clean(row.get("Municipio")),
+            "address": clean(row.get("Direccion")),
+            "phone": clean(row.get("Telefono")),
+            "email": clean(row.get("CorreoElectronico")),
+        }
+
+    markers = post_json(
+        MARKERS_URL,
+        {"filtros": EMPTY_FILTERS, "universidades": "false"},
+        timeout,
+    )
+    for row in markers:
+        code = clean(row.get("Codigo"))
+        if not CODE_RE.fullmatch(code):
+            continue
+        entry = index.setdefault(code, {"code": code})
+        entry.setdefault("name", clean(row.get("Denominacion")))
+        entry.update(
+            {
+                "stage": clean(row.get("DesEtapaCentro")),
+                "latitude": clean(row.get("Latitud")),
+                "longitude": clean(row.get("Longitud")),
+                "destination_code": clean(row.get("CentroDestino")),
+            }
+        )
+
+    if not index:
+        raise RuntimeError("The directory index came back empty")
+    return index
+
+
 def fetch_directory(
     code: str,
     timeout: float = 30.0,
     attempts: int = 1,
 ) -> dict[str, Any]:
-    """Fetch and parse one public directory detail page."""
+    """Fetch and parse one public directory detail card."""
     last_error = ""
     attempt_count = max(1, min(attempts, 3))
     for attempt in range(attempt_count):
         try:
             response = request_session().get(
                 DETAIL_URL,
-                params={"codigo": code},
+                params={"codigo": code, "universidades": "false"},
                 timeout=timeout,
             )
-            if response.status_code == 404:
-                return {"code": code, "present": False, "fields": {}, "error": ""}
             if response.status_code == 429 or response.status_code >= 500:
                 raise requests.HTTPError(
                     f"HTTP {response.status_code}",
@@ -359,6 +455,9 @@ def fetch_directory(
 
             response.raise_for_status()
             fields = parse_directory_html(response.text)
+            if not fields:
+                # The widget answers with an empty card for unknown codes.
+                return {"code": code, "present": False, "fields": {}, "error": ""}
             if code == fields.get("code"):
                 return {
                     "code": code,
@@ -366,21 +465,8 @@ def fetch_directory(
                     "fields": fields,
                     "error": "",
                 }
-
-            page_text = fold(response.text)
-            if "no se han encontrado" in page_text or "centro no encontrado" in page_text:
-                return {
-                    "code": code,
-                    "present": False,
-                    "fields": fields,
-                    "error": "",
-                }
-
-            if "ha ocurrido un error" in page_text or "validation error" in page_text:
-                last_error = "directory_application_error"
-            else:
-                last_error = "unparseable_directory_response"
-        except requests.RequestException as exc:
+            last_error = "unexpected_code_in_directory_card"
+        except (requests.RequestException, json.JSONDecodeError) as exc:
             last_error = f"{type(exc).__name__}: {exc}"
 
         if attempt + 1 < attempt_count:
@@ -401,11 +487,12 @@ def compare_fields(
     """Compare stable fields exposed by both sources."""
     changes: list[dict[str, str]] = []
     for directory_key, catalogue_key, kind in COMPARISONS:
-        if directory_key not in directory:
+        directory_value = clean(directory.get(directory_key))
+        if not directory_value:
+            # A field the directory does not publish is not a discrepancy.
             continue
 
         catalogue_value = clean(catalogue_row.get(catalogue_key))
-        directory_value = clean(directory.get(directory_key))
         if comparable(catalogue_value, kind) == comparable(directory_value, kind):
             continue
 
@@ -462,7 +549,7 @@ def build_report(
                     "code": code,
                     "name": clean(fields.get("name")),
                     "municipality": clean(fields.get("municipality")),
-                    "island": clean(fields.get("island")),
+                    "stage": clean(fields.get("stage")),
                 }
             )
             continue
@@ -482,18 +569,20 @@ def build_report(
         "scope": scope,
         "source": {
             "search_url": SEARCH_URL,
+            "index_url": INDEX_URL,
+            "markers_url": MARKERS_URL,
             "detail_url_template": DETAIL_URL + "?codigo={code}",
-            "bulk_operational_endpoint": None,
-            "bulk_endpoint_note": (
-                "The search application uses internal CKAN DataStore resources "
-                "that are not a stable public contract."
+            "note": (
+                "The search widgets answer unfiltered queries with the whole "
+                "operational directory, so presence is checked in two requests "
+                "and only the detail cards are fetched code by code."
             ),
         },
         "coverage": {
-            "complete_for_known_codes": scope == "all",
+            "complete_for_known_codes": True,
             "new_code_discovery": (
-                "New codes require another reviewed source, such as the BOC "
-                "watch, until a stable public bulk operational index exists."
+                "The unfiltered index lists every published code, so centres "
+                "absent from the catalogue are reported without another source."
             ),
         },
         "checked_count": len(checks),
@@ -535,14 +624,14 @@ def markdown_report(report: dict[str, Any]) -> str:
             [
                 "## Códigos del directorio ausentes del catálogo",
                 "",
-                "| Código | Denominación | Municipio | Isla |",
+                "| Código | Denominación | Municipio | Etapa |",
                 "|---|---|---|---|",
             ]
         )
         for item in report["directory_only"]:
             lines.append(
                 f"| {item['code']} | {item['name']} | "
-                f"{item['municipality']} | {item['island']} |"
+                f"{item['municipality']} | {item.get('stage', '')} |"
             )
         lines.append("")
 
@@ -590,11 +679,11 @@ def markdown_report(report: dict[str, Any]) -> str:
         [
             "## Cobertura",
             "",
-            "El directorio público expone fichas estables por código. La búsqueda "
-            "global usa una implementación CKAN interna, pero no se ha identificado "
-            "un índice operacional masivo público y estable. El modo all es "
-            "exhaustivo para los códigos conocidos; las altas nuevas dependen de "
-            "detectores como BOC hasta disponer de un índice público estable.",
+            "El buscador público responde a una consulta sin filtros con el "
+            "listado completo del directorio operativo. Esa consulta se usa "
+            "para comprobar presencia y para detectar códigos que el catálogo "
+            "todavía no recoge; las fichas por código sólo se piden para los "
+            "centros seleccionados por el alcance.",
             "",
         ]
     )
@@ -617,8 +706,70 @@ def write_report(report: dict[str, Any]) -> None:
             handle.write(markdown)
 
 
+def fetch_details(
+    codes: list[str],
+    timeout: float,
+    attempts: int,
+    workers: int,
+    delay: float,
+) -> dict[str, dict[str, Any]]:
+    """Fetch the detail card of every selected code."""
+    results: dict[str, dict[str, Any]] = {}
+
+    if workers == 1:
+        for index, code in enumerate(codes):
+            results[code] = fetch_directory(code, timeout, attempts)
+            if delay > 0 and index + 1 < len(codes):
+                time.sleep(delay)
+        return results
+
+    with ThreadPoolExecutor(max_workers=workers) as executor:
+        futures = {
+            executor.submit(fetch_directory, code, timeout, attempts): code
+            for code in codes
+        }
+        for future in as_completed(futures):
+            code = futures[future]
+            try:
+                results[code] = future.result()
+            except Exception as exc:  # pragma: no cover - defensive
+                results[code] = {
+                    "code": code,
+                    "present": False,
+                    "fields": {},
+                    "error": f"{type(exc).__name__}: {exc}",
+                }
+    return results
+
+
+def build_checks(
+    catalogue: dict[str, dict[str, str]],
+    index: dict[str, dict[str, str]],
+    details: dict[str, dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Merge the bulk index and the fetched detail cards into one check list."""
+    checks: list[dict[str, Any]] = []
+    for code in sorted(set(catalogue) | set(index) | set(details)):
+        detail = details.get(code, {})
+        if detail.get("error"):
+            checks.append(detail)
+            continue
+
+        fields = dict(index.get(code, {}))
+        fields.update(detail.get("fields", {}))
+        checks.append(
+            {
+                "code": code,
+                "present": code in index or bool(detail.get("present")),
+                "fields": fields,
+                "error": "",
+            }
+        )
+    return checks
+
+
 def main() -> None:
-    """Compare selected codes with the public operational directory."""
+    """Compare the catalogue with the public operational directory."""
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--scope",
@@ -636,7 +787,9 @@ def main() -> None:
     args = parser.parse_args()
 
     catalogue = load_catalogue()
-    codes = select_codes(catalogue, args.scope, args.codes)
+    index = directory_index(max(args.timeout, 60.0))
+
+    codes = select_codes(catalogue, args.scope, args.codes, set(index))
     codes, batch_number, batch_count = rotating_batch(
         codes,
         args.batch_size,
@@ -645,46 +798,13 @@ def main() -> None:
     if args.limit > 0:
         codes = codes[: args.limit]
 
-    checks: list[dict[str, Any]] = []
     workers = max(1, min(args.workers, 8))
     delay = max(0.0, args.delay)
+    details = fetch_details(codes, args.timeout, args.attempts, workers, delay)
 
-    if workers == 1:
-        for index, code in enumerate(codes):
-            try:
-                checks.append(fetch_directory(code, args.timeout, args.attempts))
-            except Exception as exc:  # pragma: no cover
-                checks.append(
-                    {
-                        "code": code,
-                        "present": False,
-                        "fields": {},
-                        "error": f"{type(exc).__name__}: {exc}",
-                    }
-                )
-            if delay > 0 and index + 1 < len(codes):
-                time.sleep(delay)
-    else:
-        with ThreadPoolExecutor(max_workers=workers) as executor:
-            futures = {
-                executor.submit(fetch_directory, code, args.timeout, args.attempts): code
-                for code in codes
-            }
-            for future in as_completed(futures):
-                code = futures[future]
-                try:
-                    checks.append(future.result())
-                except Exception as exc:  # pragma: no cover
-                    checks.append(
-                        {
-                            "code": code,
-                            "present": False,
-                            "fields": {},
-                            "error": f"{type(exc).__name__}: {exc}",
-                        }
-                    )
-
-    report = build_report(catalogue, checks, args.scope)
+    report = build_report(catalogue, build_checks(catalogue, index, details), args.scope)
+    report["index_count"] = len(index)
+    report["detail_count"] = len(details)
     report["batch"] = {
         "number": batch_number,
         "count": batch_count,
@@ -699,8 +819,8 @@ def main() -> None:
         f"{report['attention_count']} require review"
     )
 
-    if checks and report["error_count"] == len(checks):
-        raise SystemExit("All directory requests failed")
+    if details and all(check.get("error") for check in details.values()):
+        raise SystemExit("All directory detail requests failed")
 
 
 if __name__ == "__main__":

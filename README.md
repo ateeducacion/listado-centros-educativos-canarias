@@ -13,7 +13,8 @@ El archivo [`centros.csv`](centros.csv), situado en la raíz del repositorio, re
 - el Colectivo de Escuelas Rurales (CER), cuando corresponda;
 - el Equipo de Orientación Educativa y Psicopedagógico (EOEP), cuando esté disponible;
 - la zona de inspección educativa obtenida del conjunto de datos oficial de zonas de inspección;
-- los CEP, CER, EOEP y oficinas Medusa como registros del mismo listado, identificados mediante su tipo de centro.
+- los CEP, CER, EOEP y oficinas Medusa como registros del mismo listado, identificados mediante su tipo de centro;
+- los centros que publica el directorio operativo de la Consejería pero que todavía no aparecen en el conjunto de datos abiertos, principalmente las unidades de atención a personas adultas (UAPA).
 
 Este repositorio es una solución temporal de enriquecimiento mientras las fuentes oficiales no incluyan todos estos datos de forma completa y coherente.
 
@@ -43,7 +44,7 @@ Entre las columnas añadidas o normalizadas se encuentran:
 | `Activo` | `1` si el centro está vigente y `0` si se conserva solo por trazabilidad histórica. |
 | `FechaAlta` / `FechaBaja` | Vigencia conocida cuando una fuente oficial permite determinarla. |
 | `CodigoSustituidoPor` | Código del centro que sustituye a uno dado de baja. |
-| `FuenteCentro` | Procedencia del registro base. |
+| `FuenteCentro` | Procedencia del registro base: `Datos Abiertos de Canarias`, `data/additional_centres.csv` o `Directorio operativo de centros educativos`. |
 | `FuenteEstado` / `FuenteEstadoURL` | Fuente pública usada para una corrección de vigencia. |
 
 No se publica el nombre de la persona inspectora. Solo se incorpora la identificación de la zona de inspección.
@@ -56,17 +57,19 @@ La generación consulta, como mínimo, los siguientes conjuntos de datos:
 2. **Zonas de Inspección Educativa de Canarias**, del que se utilizan la relación entre centros y zonas y el catálogo de zonas.
 3. Datos de apoyo mantenidos en este repositorio para completar las asignaciones de CEP que todavía no ofrece la fuente principal. Las webs públicas de los CEP se contrastan con el directorio oficial de Centros del Profesorado del Gobierno de Canarias.
 4. Correcciones de vigencia revisadas y versionadas cuando el BOC o el directorio oficial de centros se adelantan a la publicación de OpenData.
-5. **Directorio operativo de centros educativos**, consultado mediante la ficha pública por código para detectar diferencias respecto al catálogo versionado.
+5. **Directorio operativo de centros educativos**, el buscador público de la Consejería. Se usa para detectar diferencias respecto al catálogo versionado y para incorporar los centros que todavía no publica OpenData.
 
-El BOC se usa como **detector de posibles cambios**, no como una fuente que modifique el catálogo de forma automática. El workflow genera un informe y cualquier corrección se incorpora de forma explícita con su procedencia.
+El BOC se usa como **detector de posibles cambios**, no como una fuente que modifique el catálogo de forma automática. El workflow genera un informe y cualquier corrección se incorpora de forma explícita con su procedencia. La dirección de cada anuncio se construye a partir del identificador `BOC-A-…` del feed, porque el enlace que publica el RSS ya no se sirve; las publicaciones que no puedan leerse se cuentan en el informe en lugar de interrumpirlo.
 
-El buscador operativo público expone una ficha estable por código en:
+El buscador responde a una consulta sin filtros con el listado completo del directorio. Con dos peticiones se obtiene el censo operativo entero —denominación, municipio, dirección, teléfono, correo, coordenadas y etapa— y la ficha por código añade el resto de campos publicados:
 
 ```text
-https://www.gobiernodecanarias.org/educacion/centroseducativos/buscador-centros-openlayers/resultados/detalle?codigo=XXXXXXXX
+.../.content/widgets-buscador-centros-openlayers/get-todos-centros.jsp
+.../.content/widgets-buscador-centros-openlayers/get-centros.jsp
+.../.content/widgets-buscador-centros-openlayers/get-centro-detalle.jsp?codigo=XXXXXXXX
 ```
 
-El análisis de errores públicos del propio buscador muestra que la aplicación consulta internamente un CKAN DataStore. Esos endpoints y UUID internos se consideran un detalle de implementación: ya han cambiado en el pasado y **no se usan como contrato de este repositorio**. No se ha identificado un índice operacional masivo público y estable; por eso la comparación automática usa las fichas públicas por código.
+La página `resultados/detalle` ya no incluye los datos en el HTML servido: los carga el navegador, de modo que raspar esa página devuelve fichas vacías. Estos widgets son la parte pública de la misma aplicación y **no son un contrato estable**: pueden cambiar, y por eso la comparación registra sus errores en lugar de modificar datos de forma automática. El CKAN DataStore interno que usa el buscador sigue sin utilizarse.
 
 La automatización localiza los recursos OpenData mediante la API CKAN del portal, evitando depender permanentemente de identificadores de recurso concretos.
 
@@ -82,6 +85,9 @@ python scripts/check_boc.py
 # Auditoría manual del directorio operativo, solo cuando se quiera revisar:
 python scripts/directory_diff.py --scope candidates --workers 1 --delay 1
 python scripts/directory_diff.py --scope all --workers 1 --delay 1
+
+# Regenerar los centros que solo publica el directorio operativo:
+python scripts/import_directory_centres.py --workers 1 --delay 1
 ```
 
 El proceso realiza estas operaciones:
@@ -91,7 +97,7 @@ El proceso realiza estas operaciones:
 3. cruza cada centro con su zona de inspección mediante el código oficial;
 4. completa los datos de CEP con la tabla curada;
 5. conserva los datos de EOEP y CER disponibles;
-6. incorpora los servicios educativos que deban formar parte del listado único;
+6. incorpora los servicios educativos y los centros del directorio operativo que deban formar parte del listado único;
 7. aplica únicamente correcciones de estado revisadas y con fuente pública;
 8. genera `centros.csv` y `centros.json`;
 9. valida códigos, duplicados, sustituciones, relaciones y estructura;
@@ -134,7 +140,8 @@ La documentación de GitHub Pages explica las fuentes, el modelo de datos y el p
 - Algunos centros pueden no tener zona de inspección en el conjunto oficial.
 - La ausencia de un valor no implica necesariamente que el servicio no exista; puede indicar que la fuente no lo publica.
 - Las transformaciones automáticas no corrigen silenciosamente conflictos: se registran como errores o advertencias para su revisión.
-- La comprobación manual completa del directorio es exhaustiva para los códigos ya conocidos, pero no puede garantizar por sí sola el descubrimiento de códigos completamente nuevos mientras no exista un índice operacional masivo público y estable. Los códigos nuevos detectados por BOC sí pueden contrastarse de forma puntual aunque todavía no estén en el catálogo.
+- La consulta sin filtros del buscador lista todos los códigos publicados, de modo que los centros ausentes del catálogo se detectan sin necesidad de otra fuente. Aun así, depende de una aplicación ajena que puede cambiar sin aviso.
+- Los centros incorporados desde el directorio operativo no tienen zona de inspección en el conjunto oficial; solo se conserva la que publica su propia ficha, cuando existe.
 - La presencia o ausencia de una ficha en el directorio operativo no se considera una señal suficiente para activar o desactivar un centro.
 
 ## Cita
