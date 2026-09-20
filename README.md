@@ -78,9 +78,10 @@ python scripts/update_data.py
 python scripts/validate_data.py
 python scripts/export_consumers.py
 python scripts/check_boc.py
+
+# Auditoría manual del directorio operativo, solo cuando se quiera revisar:
 python scripts/directory_diff.py --scope candidates --workers 1 --delay 1
-# Auditoría rotatoria y limitada de los códigos conocidos:
-python scripts/directory_diff.py --scope all --batch-size 150 --workers 1 --delay 1
+python scripts/directory_diff.py --scope all --workers 1 --delay 1
 ```
 
 El proceso realiza estas operaciones:
@@ -95,8 +96,9 @@ El proceso realiza estas operaciones:
 8. genera `centros.csv` y `centros.json`;
 9. valida códigos, duplicados, sustituciones, relaciones y estructura;
 10. genera contratos reducidos para otros aplicativos;
-11. comprueba publicaciones recientes del BOC y genera un informe de posibles desfases;
-12. contrasta candidatos con el directorio operativo público y genera `dist/directory-diff.json` y `dist/directory-diff.md`.
+11. comprueba publicaciones recientes del BOC y genera un informe de posibles desfases.
+
+La comparación exhaustiva con el directorio operativo se mantiene como una herramienta manual mediante `scripts/directory_diff.py`. No forma parte del CI ni de los workflows programados.
 
 ## Actualización automática
 
@@ -105,11 +107,10 @@ El workflow nocturno consulta las fuentes oficiales. Cuando detecta cambios:
 - regenera los archivos;
 - ejecuta las validaciones;
 - ejecuta la vigilancia BOC;
-- contrasta con el directorio operativo los códigos candidatos detectados por BOC, overrides y datos curados;
 - crea una rama automática;
 - abre o actualiza un pull request con el resumen de altas, bajas y modificaciones.
 
-Además, el workflow **Directory watch** revisa semanalmente un lote rotatorio de hasta 150 códigos conocidos contra sus fichas públicas del directorio operativo. Las peticiones son secuenciales, se espera al menos un segundo entre consultas y los runs automáticos no reintentan una ficha fallida. Con el volumen actual, el barrido completo se reparte aproximadamente entre diez ejecuciones semanales, evitando generar una ráfaga de unas 1.500 peticiones contra el servicio oficial. El informe queda disponible como artefacto de GitHub Actions y en el resumen del job.
+La auditoría amplia del directorio operativo **no se ejecuta automáticamente**. Se lanza manualmente cuando se necesita contrastar el catálogo y puede configurarse con un único worker, pausas entre peticiones y lotes limitados. De este modo el repositorio no convierte GitHub Actions en un crawler periódico contra un servicio público ajeno.
 
 Los cambios no se incorporan directamente a `main`: deben revisarse y fusionarse mediante pull request. La ausencia de un código en el directorio **no marca un centro como inactivo automáticamente**; una baja requiere una fuente explícita y revisable.
 
@@ -133,7 +134,7 @@ La documentación de GitHub Pages explica las fuentes, el modelo de datos y el p
 - Algunos centros pueden no tener zona de inspección en el conjunto oficial.
 - La ausencia de un valor no implica necesariamente que el servicio no exista; puede indicar que la fuente no lo publica.
 - Las transformaciones automáticas no corrigen silenciosamente conflictos: se registran como errores o advertencias para su revisión.
-- La comprobación completa del directorio es exhaustiva para los códigos ya conocidos, pero no puede garantizar por sí sola el descubrimiento de códigos completamente nuevos mientras no exista un índice operacional masivo público y estable. Los códigos nuevos detectados por BOC sí se comprueban aunque todavía no estén en el catálogo.
+- La comprobación manual completa del directorio es exhaustiva para los códigos ya conocidos, pero no puede garantizar por sí sola el descubrimiento de códigos completamente nuevos mientras no exista un índice operacional masivo público y estable. Los códigos nuevos detectados por BOC sí pueden contrastarse de forma puntual aunque todavía no estén en el catálogo.
 - La presencia o ausencia de una ficha en el directorio operativo no se considera una señal suficiente para activar o desactivar un centro.
 
 ## Cita
