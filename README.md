@@ -56,10 +56,19 @@ La generación consulta, como mínimo, los siguientes conjuntos de datos:
 2. **Zonas de Inspección Educativa de Canarias**, del que se utilizan la relación entre centros y zonas y el catálogo de zonas.
 3. Datos de apoyo mantenidos en este repositorio para completar las asignaciones de CEP que todavía no ofrece la fuente principal. Las webs públicas de los CEP se contrastan con el directorio oficial de Centros del Profesorado del Gobierno de Canarias.
 4. Correcciones de vigencia revisadas y versionadas cuando el BOC o el directorio oficial de centros se adelantan a la publicación de OpenData.
+5. **Directorio operativo de centros educativos**, consultado mediante la ficha pública por código para detectar diferencias respecto al catálogo versionado.
 
 El BOC se usa como **detector de posibles cambios**, no como una fuente que modifique el catálogo de forma automática. El workflow genera un informe y cualquier corrección se incorpora de forma explícita con su procedencia.
 
-La automatización localiza los recursos mediante la API CKAN del portal, evitando depender permanentemente de identificadores de recurso concretos.
+El buscador operativo público expone una ficha estable por código en:
+
+```text
+https://www.gobiernodecanarias.org/educacion/centroseducativos/buscador-centros-openlayers/resultados/detalle?codigo=XXXXXXXX
+```
+
+El análisis de errores públicos del propio buscador muestra que la aplicación consulta internamente un CKAN DataStore. Esos endpoints y UUID internos se consideran un detalle de implementación: ya han cambiado en el pasado y **no se usan como contrato de este repositorio**. No se ha identificado un índice operacional masivo público y estable; por eso la comparación automática usa las fichas públicas por código.
+
+La automatización localiza los recursos OpenData mediante la API CKAN del portal, evitando depender permanentemente de identificadores de recurso concretos.
 
 ## Generación
 
@@ -69,6 +78,9 @@ python scripts/update_data.py
 python scripts/validate_data.py
 python scripts/export_consumers.py
 python scripts/check_boc.py
+python scripts/directory_diff.py --scope candidates
+# Comprobación completa de todos los códigos conocidos:
+python scripts/directory_diff.py --scope all
 ```
 
 El proceso realiza estas operaciones:
@@ -83,7 +95,8 @@ El proceso realiza estas operaciones:
 8. genera `centros.csv` y `centros.json`;
 9. valida códigos, duplicados, sustituciones, relaciones y estructura;
 10. genera contratos reducidos para otros aplicativos;
-11. comprueba publicaciones recientes del BOC y genera un informe de posibles desfases.
+11. comprueba publicaciones recientes del BOC y genera un informe de posibles desfases;
+12. contrasta candidatos con el directorio operativo público y genera `dist/directory-diff.json` y `dist/directory-diff.md`.
 
 ## Actualización automática
 
@@ -91,10 +104,14 @@ El workflow nocturno consulta las fuentes oficiales. Cuando detecta cambios:
 
 - regenera los archivos;
 - ejecuta las validaciones;
+- ejecuta la vigilancia BOC;
+- contrasta con el directorio operativo los códigos candidatos detectados por BOC, overrides y datos curados;
 - crea una rama automática;
 - abre o actualiza un pull request con el resumen de altas, bajas y modificaciones.
 
-Los cambios no se incorporan directamente a `main`: deben revisarse y fusionarse mediante pull request.
+Además, el workflow **Directory watch** ejecuta semanalmente una comparación completa de todos los códigos conocidos contra sus fichas públicas del directorio operativo. El informe queda disponible como artefacto de GitHub Actions y en el resumen del job.
+
+Los cambios no se incorporan directamente a `main`: deben revisarse y fusionarse mediante pull request. La ausencia de un código en el directorio **no marca un centro como inactivo automáticamente**; una baja requiere una fuente explícita y revisable.
 
 ## Contratos para otros aplicativos
 
@@ -116,6 +133,8 @@ La documentación de GitHub Pages explica las fuentes, el modelo de datos y el p
 - Algunos centros pueden no tener zona de inspección en el conjunto oficial.
 - La ausencia de un valor no implica necesariamente que el servicio no exista; puede indicar que la fuente no lo publica.
 - Las transformaciones automáticas no corrigen silenciosamente conflictos: se registran como errores o advertencias para su revisión.
+- La comprobación completa del directorio es exhaustiva para los códigos ya conocidos, pero no puede garantizar por sí sola el descubrimiento de códigos completamente nuevos mientras no exista un índice operacional masivo público y estable. Los códigos nuevos detectados por BOC sí se comprueban aunque todavía no estén en el catálogo.
+- La presencia o ausencia de una ficha en el directorio operativo no se considera una señal suficiente para activar o desactivar un centro.
 
 ## Cita
 
