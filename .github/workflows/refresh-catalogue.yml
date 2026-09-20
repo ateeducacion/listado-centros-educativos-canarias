@@ -10,6 +10,7 @@ on:
       - "scripts/validate_data.py"
       - "scripts/export_consumers.py"
       - "scripts/check_boc.py"
+      - "scripts/directory_diff.py"
       - "requirements.txt"
       - ".github/workflows/refresh-catalogue.yml"
   schedule:
@@ -56,6 +57,10 @@ jobs:
         run: python scripts/check_boc.py
         continue-on-error: true
 
+      - name: Compare directory candidates
+        run: python scripts/directory_diff.py --scope candidates
+        continue-on-error: true
+
       - name: Upload generated catalogue
         uses: actions/upload-artifact@v7
         with:
@@ -65,6 +70,8 @@ jobs:
             centros.json
             dist/boc-watch.json
             dist/boc-watch.md
+            dist/directory-diff.json
+            dist/directory-diff.md
           if-no-files-found: error
           retention-days: 7
 
@@ -113,9 +120,11 @@ jobs:
             - `python scripts/validate_data.py`
             - `python scripts/export_consumers.py`
             - `python scripts/check_boc.py`
+            - `python scripts/directory_diff.py --scope candidates`
 
-            El informe del BOC es únicamente un detector de posibles desfases:
-            nunca modifica el catálogo automáticamente.
+            Los informes del BOC y del directorio operativo son detectores de
+            posibles desfases: nunca modifican el catálogo automáticamente ni
+            deducen una baja solo porque un código no aparezca en el directorio.
 
             Este PR debe revisarse antes de fusionarse.
           labels: data,automated
