@@ -47,6 +47,32 @@ class CatalogueTest(unittest.TestCase):
         self.assertEqual("0", corrected["Activo"])
         self.assertEqual("38017731", corrected["CodigoSustituidoPor"])
 
+    def test_field_override_replaces_one_value_and_records_it(self) -> None:
+        item = update_data.apply_field_overrides(
+            {"Codigo": "38016672", "Longitud": "-16275", "Latitud": "28.4686"},
+            {"38016672": {"Longitud": "-16.275"}},
+        )
+        self.assertEqual("-16.275", item["Longitud"])
+        self.assertEqual("28.4686", item["Latitud"])
+        self.assertEqual("Longitud", item["CamposCorregidos"])
+
+        untouched = update_data.apply_field_overrides({"Codigo": "35000011"}, {})
+        self.assertEqual("", untouched["CamposCorregidos"])
+
+    def test_field_override_file_is_checked_against_the_schema(self) -> None:
+        with (ROOT / "centros.csv").open(encoding="utf-8-sig", newline="") as handle:
+            columns = csv.DictReader(handle).fieldnames or []
+
+        overrides = update_data.load_field_overrides(columns)
+        self.assertTrue(overrides)
+        for code, corrections in overrides.items():
+            self.assertRegex(code, r"^\d{8}$")
+            for field in corrections:
+                self.assertNotIn(field, update_data.STATUS_FIELDS)
+
+        with self.assertRaises(RuntimeError):
+            update_data.load_field_overrides(["Codigo"])
+
     def test_merge_rows_prefers_official_source(self) -> None:
         merged = update_data.merge_rows(
             [{"Codigo": "35000011", "Denominacion": "Official"}],

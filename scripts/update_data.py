@@ -21,6 +21,7 @@ CEP_ASSIGNMENTS = ROOT / "data" / "cep_assignments.csv"
 ADDITIONAL_CENTRES = ROOT / "data" / "additional_centres.csv"
 DIRECTORY_CENTRES = ROOT / "data" / "directory_centres.csv"
 CENTRE_OVERRIDES = ROOT / "data" / "centre_overrides.csv"
+FIELD_OVERRIDES = ROOT / "data" / "centre_field_overrides.csv"
 OFFICIAL_SOURCE = "Datos Abiertos de Canarias"
 DIRECTORY_SOURCE = "Directorio operativo de centros educativos"
 
@@ -143,6 +144,47 @@ def load_centre_overrides() -> dict[str, dict[str, str]]:
             raise RuntimeError(f"Centre override {code} has no state provenance")
         overrides[code] = {key: clean(value) for key, value in row.items()}
     return overrides
+
+
+def load_field_overrides(
+    fieldnames: list[str],
+) -> dict[str, dict[str, str]]:
+    """Load reviewed per-field corrections with explicit provenance.
+
+    Each row replaces one published value. The correction is deliberately
+    dumb: a dependent field, such as the name of an inspection zone, needs
+    its own row, so the file states every value it changes.
+    """
+    overrides: dict[str, dict[str, str]] = {}
+    for row in read_local_csv(FIELD_OVERRIDES):
+        code = clean(row.get("Codigo"))
+        field = clean(row.get("Campo"))
+        if not re.fullmatch(r"\d{8}", code):
+            raise RuntimeError(f"Invalid field override code: {code!r}")
+        if field not in fieldnames:
+            raise RuntimeError(f"Unknown field in override for {code}: {field!r}")
+        if field in STATUS_FIELDS:
+            raise RuntimeError(
+                f"Lifecycle field {field} for {code} belongs to "
+                "data/centre_overrides.csv"
+            )
+        if field in overrides.get(code, {}):
+            raise RuntimeError(f"Duplicated field override: {code} {field}")
+        if not clean(row.get("Fuente")) or not clean(row.get("FuenteURL")):
+            raise RuntimeError(f"Field override {code} {field} has no provenance")
+        overrides.setdefault(code, {})[field] = clean(row.get("Valor"))
+    return overrides
+
+
+def apply_field_overrides(
+    item: dict[str, str],
+    overrides: dict[str, dict[str, str]],
+) -> dict[str, str]:
+    """Replace reviewed values and record which fields were corrected."""
+    corrections = overrides.get(clean(item.get("Codigo")), {})
+    item["CamposCorregidos"] = ",".join(sorted(corrections))
+    item.update(corrections)
+    return item
 
 
 def find_cep_assignment(
@@ -271,10 +313,12 @@ def main() -> None:
         "FuenteCEP",
         "FuenteZonaInspeccion",
         *STATUS_FIELDS,
+        "CamposCorregidos",
     ]
     fieldnames = source_fields + [
         field for field in added_fields if field not in source_fields
     ]
+    field_overrides = load_field_overrides(fieldnames)
 
     enriched: list[dict[str, str]] = []
     for row in centres:
@@ -315,6 +359,7 @@ def main() -> None:
                 "FuenteZonaInspeccion": zone_source,
             }
         )
+        item = apply_field_overrides(item, field_overrides)
         enriched.append(apply_state(item, overrides))
 
     enriched.sort(key=lambda row: clean(row.get("Codigo")))

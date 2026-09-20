@@ -176,6 +176,24 @@ def validate_curated_materialization(
                     f"catalogue: {code}"
                 )
 
+    _, field_rows = read_csv(DATA_DIR / "centre_field_overrides.csv")
+    for override in field_rows:
+        code = clean(override.get("Codigo")).strip()
+        field = clean(override.get("Campo")).strip()
+        if not code or not field:
+            continue
+        source = catalogue.get(code)
+        if source is None:
+            fail(f"Field override is missing from committed catalogue: {code}")
+        if clean(source.get(field)) != clean(override.get("Valor")):
+            fail(
+                f"Field override for {code} did not reach the catalogue: {field} "
+                f"is {clean(source.get(field))!r}, expected "
+                f"{clean(override.get('Valor'))!r}"
+            )
+        if field not in clean(source.get("CamposCorregidos")).split(","):
+            fail(f"Field override for {code} is not recorded in CamposCorregidos: {field}")
+
     _, override_rows = read_csv(DATA_DIR / "centre_overrides.csv")
     fields = (
         "Activo",
