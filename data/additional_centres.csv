@@ -1,4 +1,4 @@
-Codigo,DesEtapaCentro,Denominacion,Isla,Municipio,PaginaWeb,CentroProfesores
+Codigo,DesEtapaCentro,Denominacion,Isla,Municipio,PaginaWeb,CentroProfesores,Direccion,Localidad,CodigoPostal,Provincia,Telefono,CorreoElectronico,Naturaleza,TipoCentro,Titular,Longitud,Latitud
 35700043,C.PROFES.,C.PROFES. LANZAROTE,LANZAROTE,ARRECIFE,http://www.gobiernodecanarias.org/educacion/cep_lanzarote,SIN ASIGNAR
 35700110,C.PROFES.,C.PROFES. PUERTO DEL ROSARIO,FUERTEVENTURA,PUERTO DEL ROSARIO,http://www.gobiernodecanarias.org/educacion/cep_puerto,SIN ASIGNAR
 35700468,C.PROFES.,C.PROFES. LAS PALMAS DE GRAN CANARIA,GRAN CANARIA,LAS PALMAS DE GRAN CANARIA,http://www.ceplaspalmas2.com,SIN ASIGNAR
@@ -111,3 +111,4 @@ Codigo,DesEtapaCentro,Denominacion,Isla,Municipio,PaginaWeb,CentroProfesores
 38707501,CER,CER TIJARAFE-TRICIAS,LA PALMA,TIJARAFE,,
 38707631,CER,CER SANTIAGO DEL TEIDE,TENERIFE,SANTIAGO DEL TEIDE,,C.PROFES. TENERIFE SUR - 38700388
 38707901,CER,CER EL HIERRO,EL HIERRO,VALVERDE,,C.PROFES. EL HIERRO - 38700140
+38017731,CIFP,CIFP EN ICOD DE LOS VINOS,TENERIFE,ICOD DE LOS VINOS,,,C/ ELÍAS SERRA RAFOLS\, 9 (EL PAREDÓN),ICOD DE LOS VINOS,38430,Santa Cruz de Tenerife,922-592747,38017731@gobiernodecanarias.org,Público,Docente,"Cons. de Educación\, Form. Prof.\, Activ. Física y Deportes",-16.7096031581964,28.3682626040993
