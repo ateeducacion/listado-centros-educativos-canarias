@@ -157,7 +157,12 @@ def compare_directory(
 
     catalogue_name = (catalog_row.get("Denominacion") or "").strip()
     directory_name = directory.get("name", "").strip()
-    if catalogue_name and directory_name and normalized(catalogue_name) != normalized(directory_name):
+    names_differ = (
+        catalogue_name
+        and directory_name
+        and normalized(catalogue_name) != normalized(directory_name)
+    )
+    if names_differ:
         issues.append("name_differs_from_directory")
     if not is_active(catalog_row):
         issues.append("inactive_but_present_in_directory")
