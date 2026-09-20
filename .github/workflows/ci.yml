@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python:
+    name: Python
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Check Python syntax
+        run: python -m compileall -q scripts tests
+
+      - name: Lint Python
+        run: ruff check scripts tests
+
+      - name: Run tests
+        run: python -m unittest discover -s tests -v
+
+  data:
+    name: CSV and JSON
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Validate catalogue schema and semantics
+        run: python scripts/validate_data.py
+
+      - name: Validate committed CSV and JSON
+        if: always()
+        run: python scripts/validate_artifacts.py
+
+      - name: Generate consumer artefacts
+        if: always()
+        run: python scripts/export_consumers.py
+
+      - name: Validate generated consumer artefacts
+        if: always()
+        run: python scripts/validate_artifacts.py --generated
+
+  web:
+    name: Web
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Check JavaScript syntax
+        run: node --check docs/app.js
