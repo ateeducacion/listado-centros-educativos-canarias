@@ -219,6 +219,18 @@ class CatalogueTest(unittest.TestCase):
         self.assertTrue(missing["catalogue_active"])
         self.assertEqual("38017731", report["directory_only"][0]["code"])
 
+    def test_directory_rotating_batch_limits_requests(self) -> None:
+        codes = [f"{35000000 + index:08d}" for index in range(320)]
+        batch, number, count = directory_diff.rotating_batch(
+            codes,
+            150,
+            rotation_key=1,
+        )
+        self.assertEqual(150, len(batch))
+        self.assertEqual(2, number)
+        self.assertEqual(3, count)
+        self.assertEqual(codes[150:300], batch)
+
     def test_directory_explicit_codes_override_scope(self) -> None:
         selected = directory_diff.select_codes(
             {"35000011": {"Codigo": "35000011"}},
