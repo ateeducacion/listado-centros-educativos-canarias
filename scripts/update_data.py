@@ -19,6 +19,18 @@ OUTPUT_CSV = ROOT / "centros.csv"
 OUTPUT_JSON = ROOT / "centros.json"
 CEP_ASSIGNMENTS = ROOT / "data" / "cep_assignments.csv"
 ADDITIONAL_CENTRES = ROOT / "data" / "additional_centres.csv"
+CENTRE_OVERRIDES = ROOT / "data" / "centre_overrides.csv"
+OFFICIAL_SOURCE = "Datos Abiertos de Canarias"
+
+STATUS_FIELDS = [
+    "Activo",
+    "FechaAlta",
+    "FechaBaja",
+    "CodigoSustituidoPor",
+    "FuenteCentro",
+    "FuenteEstado",
+    "FuenteEstadoURL",
+]
 
 
 def package(name: str) -> dict[str, Any]:
@@ -113,6 +125,24 @@ def load_cep_assignments() -> tuple[
     return by_code, by_area
 
 
+def load_centre_overrides() -> dict[str, dict[str, str]]:
+    """Load reviewed lifecycle corrections with explicit provenance."""
+    overrides: dict[str, dict[str, str]] = {}
+    for row in read_local_csv(CENTRE_OVERRIDES):
+        code = clean(row.get("Codigo"))
+        if not re.fullmatch(r"\d{8}", code):
+            raise RuntimeError(f"Invalid centre override code: {code!r}")
+        if code in overrides:
+            raise RuntimeError(f"Duplicated centre override code: {code}")
+        active = clean(row.get("Activo"))
+        if active not in {"0", "1"}:
+            raise RuntimeError(f"Invalid Activo value for {code}: {active!r}")
+        if not clean(row.get("FuenteEstado")) or not clean(row.get("FuenteEstadoURL")):
+            raise RuntimeError(f"Centre override {code} has no state provenance")
+        overrides[code] = {key: clean(value) for key, value in row.items()}
+    return overrides
+
+
 def find_cep_assignment(
     row: dict[str, str],
     by_code: dict[str, dict[str, str]],
@@ -143,13 +173,13 @@ def merge_rows(
     additional_rows: list[dict[str, str]],
 ) -> list[dict[str, str]]:
     """Append curated CEP, CER and EOEP records absent from the official list."""
-    merged = list(official_rows)
+    merged = [dict(row, FuenteCentro=OFFICIAL_SOURCE) for row in official_rows]
     existing_codes = {first(row, "Codigo", "CodigoCentro") for row in merged}
 
     for row in additional_rows:
         code = first(row, "Codigo", "CodigoCentro")
         if code and code not in existing_codes:
-            merged.append(row)
+            merged.append(dict(row, FuenteCentro="data/additional_centres.csv"))
             existing_codes.add(code)
 
     return merged
@@ -170,6 +200,28 @@ def zone_name(row: dict[str, str]) -> str:
     )
 
 
+def apply_state(
+    item: dict[str, str],
+    overrides: dict[str, dict[str, str]],
+) -> dict[str, str]:
+    """Apply reviewed lifecycle metadata without altering unrelated source fields."""
+    defaults = {
+        "Activo": "1",
+        "FechaAlta": "",
+        "FechaBaja": "",
+        "CodigoSustituidoPor": "",
+        "FuenteEstado": "",
+        "FuenteEstadoURL": "",
+    }
+    for field, value in defaults.items():
+        item.setdefault(field, value)
+    override = overrides.get(clean(item.get("Codigo")))
+    if override:
+        for field in defaults:
+            item[field] = clean(override.get(field))
+    return item
+
+
 def main() -> None:
     """Generate CSV and JSON artefacts."""
     centres_dataset = package("centros-educativos-de-canarias")
@@ -177,6 +229,7 @@ def main() -> None:
 
     official_centres = read_remote_csv(resource_url(centres_dataset, "centros.csv"))
     additional_centres = read_local_csv(ADDITIONAL_CENTRES)
+    overrides = load_centre_overrides()
     centre_zones = read_remote_csv(
         resource_url(inspection_dataset, "centros-por-zonas")
     )
@@ -209,6 +262,7 @@ def main() -> None:
         "ZonaInspeccionNombre",
         "FuenteCEP",
         "FuenteZonaInspeccion",
+        *STATUS_FIELDS,
     ]
     fieldnames = source_fields + [
         field for field in added_fields if field not in source_fields
@@ -249,7 +303,7 @@ def main() -> None:
                 ),
             }
         )
-        enriched.append(item)
+        enriched.append(apply_state(item, overrides))
 
     enriched.sort(key=lambda row: clean(row.get("Codigo")))
 
