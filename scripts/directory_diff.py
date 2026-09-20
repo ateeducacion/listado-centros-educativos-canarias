@@ -107,9 +107,7 @@ class DirectoryHtmlParser(HTMLParser):
             self.row = []
         elif tag in {"th", "td"} and self.row is not None:
             self.cell = []
-        elif "dt" == tag:
-            self.term = []
-        elif "dd" == tag and self.last_term:
+        elif tag == "dt" or (tag == "dd" and self.last_term):
             self.term = []
 
     def handle_data(self, data: str) -> None:
