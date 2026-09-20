@@ -19,8 +19,10 @@ OUTPUT_CSV = ROOT / "centros.csv"
 OUTPUT_JSON = ROOT / "centros.json"
 CEP_ASSIGNMENTS = ROOT / "data" / "cep_assignments.csv"
 ADDITIONAL_CENTRES = ROOT / "data" / "additional_centres.csv"
+DIRECTORY_CENTRES = ROOT / "data" / "directory_centres.csv"
 CENTRE_OVERRIDES = ROOT / "data" / "centre_overrides.csv"
 OFFICIAL_SOURCE = "Datos Abiertos de Canarias"
+DIRECTORY_SOURCE = "Directorio operativo de centros educativos"
 
 STATUS_FIELDS = [
     "Activo",
@@ -171,16 +173,21 @@ def find_cep_assignment(
 def merge_rows(
     official_rows: list[dict[str, str]],
     additional_rows: list[dict[str, str]],
+    directory_rows: list[dict[str, str]] | None = None,
 ) -> list[dict[str, str]]:
-    """Append curated CEP, CER and EOEP records absent from the official list."""
+    """Append curated records absent from the official list, keeping provenance."""
     merged = [dict(row, FuenteCentro=OFFICIAL_SOURCE) for row in official_rows]
     existing_codes = {first(row, "Codigo", "CodigoCentro") for row in merged}
 
-    for row in additional_rows:
-        code = first(row, "Codigo", "CodigoCentro")
-        if code and code not in existing_codes:
-            merged.append(dict(row, FuenteCentro="data/additional_centres.csv"))
-            existing_codes.add(code)
+    for rows, source in (
+        (additional_rows, "data/additional_centres.csv"),
+        (directory_rows or [], DIRECTORY_SOURCE),
+    ):
+        for row in rows:
+            code = first(row, "Codigo", "CodigoCentro")
+            if code and code not in existing_codes:
+                merged.append(dict(row, FuenteCentro=source))
+                existing_codes.add(code)
 
     return merged
 
@@ -229,13 +236,14 @@ def main() -> None:
 
     official_centres = read_remote_csv(resource_url(centres_dataset, "centros.csv"))
     additional_centres = read_local_csv(ADDITIONAL_CENTRES)
+    directory_centres = read_local_csv(DIRECTORY_CENTRES)
     overrides = load_centre_overrides()
     centre_zones = read_remote_csv(
         resource_url(inspection_dataset, "centros-por-zonas")
     )
     zones = read_remote_csv(resource_url(inspection_dataset, "zonas-de-inspeccion"))
 
-    centres = merge_rows(official_centres, additional_centres)
+    centres = merge_rows(official_centres, additional_centres, directory_centres)
 
     zone_names = {
         first(row, "CodigoZonaInspeccion", "CodigoZona", "Codigo"): zone_name(row)
@@ -250,7 +258,7 @@ def main() -> None:
     cep_by_code, cep_by_area = load_cep_assignments()
 
     source_fields = list(official_centres[0].keys()) if official_centres else []
-    for row in additional_centres:
+    for row in (*additional_centres, *directory_centres):
         for field in row:
             if field not in source_fields:
                 source_fields.append(field)
@@ -273,8 +281,14 @@ def main() -> None:
         code = first(row, "Codigo", "CodigoCentro")
         stage = first(row, "DesEtapaCentro").upper()
         assignment = find_cep_assignment(row, cep_by_code, cep_by_area)
-        zone_code = zone_by_centre.get(code, "")
         item = {key: clean(value) for key, value in row.items()}
+        zone_code = zone_by_centre.get(code, "")
+        zone_source = OFFICIAL_SOURCE if zone_code else ""
+        if not zone_code and item.get("ZonaInspeccionCodigo"):
+            # The official zone dataset does not cover the directory-only
+            # centres, so their card keeps the published zone identifier.
+            zone_code = item["ZonaInspeccionCodigo"]
+            zone_source = DIRECTORY_SOURCE
 
         if stage == "C.PROFES.":
             assignment = {
@@ -298,9 +312,7 @@ def main() -> None:
                 "FuenteCEP": (
                     "data/cep_assignments.csv" if assignment else ""
                 ),
-                "FuenteZonaInspeccion": (
-                    "Datos Abiertos de Canarias" if zone_code else ""
-                ),
+                "FuenteZonaInspeccion": zone_source,
             }
         )
         enriched.append(apply_state(item, overrides))

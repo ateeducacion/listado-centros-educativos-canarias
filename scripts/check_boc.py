@@ -7,6 +7,7 @@ import csv
 import html
 import json
 import re
+import sys
 import unicodedata
 import xml.etree.ElementTree as ET
 from html.parser import HTMLParser
@@ -15,18 +16,19 @@ from typing import Any
 
 import requests
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from directory_diff import directory_index
+
 ROOT = Path(__file__).resolve().parents[1]
 DATASET = ROOT / "centros.csv"
 OUTPUT_DIR = ROOT / "dist"
 OUTPUT_JSON = OUTPUT_DIR / "boc-watch.json"
 OUTPUT_MD = OUTPUT_DIR / "boc-watch.md"
 RSS_URL = "https://www.gobiernodecanarias.org/boc/feeds/capitulo/otras_resoluciones.rss"
-DIRECTORY_URL = (
-    "https://www.gobiernodecanarias.org/educacion/centroseducativos/"
-    "buscador-centros-openlayers/resultados/detalle"
-)
 USER_AGENT = "listado-centros-educativos-canarias/1.0"
 CENTER_CODE_RE = re.compile(r"\b(?:35|38)\d{6}\b")
+GUID_RE = re.compile(r"BOC-A-(\d{4})-(\d+)-(\d+)")
 RELEVANT_TERMS = (
     "denominacion especifica",
     "cambio de denominacion",
@@ -110,27 +112,18 @@ def parse_rss(payload: str) -> list[dict[str, str]]:
     return items
 
 
-def directory_fields(document: str) -> dict[str, str]:
-    """Extract a small stable subset from the official centre directory page."""
-    text = text_from_html(document)
-    lines = [line.strip() for line in text.splitlines() if line.strip()]
-    aliases = {
-        "Código": "code",
-        "Denominación": "name",
-        "Dirección": "address",
-        "Localidad": "locality",
-        "Municipio": "municipality",
-        "Isla": "island",
-        "Código postal": "postal_code",
-        "Naturaleza": "nature",
-        "Tipología": "center_type",
-    }
-    result: dict[str, str] = {}
-    for index, line in enumerate(lines[:-1]):
-        key = aliases.get(line)
-        if key and key not in result:
-            result[key] = lines[index + 1]
-    return result
+def publication_url(item: dict[str, str]) -> str:
+    """Return the readable URL of one BOC entry.
+
+    The feed publishes a `link` built from the entry position, which the site
+    no longer serves. The guid carries the announcement number, which is what
+    the public page is named after.
+    """
+    match = GUID_RE.search(item.get("guid", ""))
+    if match:
+        year, issue, number = match.groups()
+        return f"https://www.gobiernodecanarias.org/boc/{year}/{issue}/{number}.html"
+    return (item.get("link") or "").strip()
 
 
 def is_active(row: dict[str, str]) -> bool:
@@ -169,23 +162,17 @@ def compare_directory(
     return issues
 
 
-def fetch_directory(session: requests.Session, code: str) -> dict[str, str] | None:
-    """Return the current official directory entry for a centre code."""
-    response = session.get(DIRECTORY_URL, params={"codigo": code}, timeout=45)
-    response.raise_for_status()
-    fields = directory_fields(response.text)
-    return fields if fields.get("code") == code else None
-
-
 def main() -> None:
     """Check recent BOC entries and write a review report without changing data."""
     catalog = load_catalog()
+    directory = directory_index()
     session = requests.Session()
     session.headers.update({"User-Agent": USER_AGENT})
 
     response = session.get(RSS_URL, timeout=60)
     response.raise_for_status()
     candidates: list[dict[str, Any]] = []
+    unreadable: list[dict[str, str]] = []
     attention_count = 0
 
     for item in parse_rss(response.text):
@@ -193,10 +180,17 @@ def main() -> None:
         if not is_relevant(summary):
             continue
 
+        url = publication_url(item)
         publication_text = summary
-        if item["link"]:
-            publication = session.get(item["link"], timeout=60)
-            publication.raise_for_status()
+        if url:
+            # A feed entry may point at a page that is not published yet: keep
+            # watching the rest of the feed instead of losing the whole report.
+            try:
+                publication = session.get(url, timeout=60)
+                publication.raise_for_status()
+            except requests.RequestException as exc:
+                unreadable.append({"url": url, "error": str(exc)})
+                continue
             publication_text = text_from_html(publication.text)
             if not is_relevant(publication_text):
                 continue
@@ -207,9 +201,9 @@ def main() -> None:
 
         checks: list[dict[str, Any]] = []
         for code in codes:
-            directory = fetch_directory(session, code)
+            entry = directory.get(code)
             catalog_row = catalog.get(code)
-            issues = compare_directory(code, catalog_row, directory)
+            issues = compare_directory(code, catalog_row, entry)
             attention_count += int(bool(issues))
             checks.append(
                 {
@@ -217,8 +211,8 @@ def main() -> None:
                     "catalogue_present": catalog_row is not None,
                     "catalogue_active": is_active(catalog_row) if catalog_row else None,
                     "catalogue_name": (catalog_row or {}).get("Denominacion", ""),
-                    "directory_present": directory is not None,
-                    "directory_name": (directory or {}).get("name", ""),
+                    "directory_present": entry is not None,
+                    "directory_name": (entry or {}).get("name", ""),
                     "issues": issues,
                 }
             )
@@ -226,7 +220,7 @@ def main() -> None:
         candidates.append(
             {
                 "title": item["title"],
-                "url": item["link"],
+                "url": url,
                 "published": item["pubDate"],
                 "codes": codes,
                 "checks": checks,
@@ -238,6 +232,8 @@ def main() -> None:
         "rss_url": RSS_URL,
         "candidate_count": len(candidates),
         "attention_count": attention_count,
+        "unreadable_count": len(unreadable),
+        "unreadable": unreadable,
         "candidates": candidates,
     }
     OUTPUT_JSON.write_text(
@@ -250,6 +246,7 @@ def main() -> None:
         "",
         f"- Publicaciones candidatas: {len(candidates)}",
         f"- Comprobaciones que requieren revisión: {attention_count}",
+        f"- Publicaciones no legibles: {len(unreadable)}",
         "",
     ]
     for candidate in candidates:

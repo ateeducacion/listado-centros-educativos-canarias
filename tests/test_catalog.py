@@ -54,8 +54,17 @@ class CatalogueTest(unittest.TestCase):
                 {"Codigo": "35000011", "Denominacion": "Curated"},
                 {"Codigo": "38017731", "Denominacion": "New"},
             ],
+            [
+                {"Codigo": "38017731", "Denominacion": "Duplicate"},
+                {"Codigo": "35630108", "Denominacion": "Directory only"},
+            ],
         )
-        self.assertEqual(2, len(merged))
+        self.assertEqual(3, len(merged))
+        self.assertEqual(
+            update_data.DIRECTORY_SOURCE,
+            merged[2]["FuenteCentro"],
+        )
+        self.assertEqual("Directory only", merged[2]["Denominacion"])
         self.assertEqual("Official", merged[0]["Denominacion"])
         self.assertEqual("Datos Abiertos de Canarias", merged[0]["FuenteCentro"])
         self.assertEqual("data/additional_centres.csv", merged[1]["FuenteCentro"])
@@ -141,29 +150,90 @@ class CatalogueTest(unittest.TestCase):
                 exported = list(csv.DictReader(handle))
             self.assertEqual(["35000011"], [row["Codigo"] for row in exported])
 
-    def test_directory_parser_extracts_stable_public_fields(self) -> None:
+    def test_directory_parser_reads_a_detail_card(self) -> None:
         document = """
-        <table>
-          <tr><th>Código</th><td>38017731</td></tr>
-          <tr><th>Denominación</th><td>CIFP EN ICOD DE LOS VINOS</td></tr>
-          <tr><th>Municipio</th><td>ICOD DE LOS VINOS</td></tr>
-          <tr>
-            <th>Centro del Profesorado que le corresponde</th>
-            <td>38700391 - C.PROFES. NORTE DE TENERIFE</td>
-          </tr>
-          <tr>
-            <th>EOEP al que pertenece</th>
-            <td>38702577 - E.O.E.P. YCODEN-DAUTE</td>
-          </tr>
-          <tr><th>Código zona de inspección</th><td>703</td></tr>
-        </table>
+        <div id="centro-cabecera">
+            <b> <!--false-->
+            <a target="_blank" href="/resultados/detalle/?codigo=38017731">
+                CIFP EN ICOD DE LOS VINOS
+            </a>
+            </b> - 38017731
+            - <strong>P&uacute;blico</strong>
+        </div>
+        <div id="content-1">
+          <span id="denominacion">
+            <b>Direcci&oacute;n</b><br/>
+            C/ SAN AGUST&Iacute;N, 12
+            - 38430
+            <br/>
+            ICOD DE LOS VINOS<br/>
+          </span>
+          <span id="direccion">
+            <b>Tel</b> - 922-123456 y 922-654321<br/>
+            <b>Fax</b> - 922-111222<br/>
+            <a href="mailto:38017731@gobiernodecanarias.org">correo</a><br/>
+          </span>
+          <span id="direccion">
+            <a target="_blank" href="http://example.org/centro">web</a>
+          </span>
+        </div>
+        <div id="content-4">
+          <ul class="listaOtros">
+            <li><b>Zona de inspecci&oacute;n</b>: 703-APELLIDO NOMBRE, PERSONA</li>
+            <li><b>D&iacute;a de guardia</b>: Martes</li>
+            <li><b>CEP al que pertenece</b>: 38700391 - C.PROFES. NORTE DE TENERIFE</li>
+            <li><b>EOEP</b>: 38702577 - E.O.E.P. YCODEN-DAUTE</li>
+          </ul>
+        </div>
         """
         parsed = directory_diff.parse_directory_html(document)
         self.assertEqual("38017731", parsed["code"])
         self.assertEqual("CIFP EN ICOD DE LOS VINOS", parsed["name"])
-        self.assertEqual("38700391", parsed["cep_code"])
-        self.assertEqual("38702577", parsed["eoep_code"])
-        self.assertEqual("703", parsed["inspection_zone_code"])
+        self.assertEqual("Público", parsed["concert"])
+        self.assertEqual("C/ SAN AGUSTÍN, 12", parsed["address"])
+        self.assertEqual("38430", parsed["postal_code"])
+        self.assertEqual("ICOD DE LOS VINOS", parsed["municipality"])
+        self.assertEqual("922-123456 y 922-654321", parsed["phone"])
+        self.assertEqual("922-111222", parsed["fax"])
+        self.assertEqual("38017731@gobiernodecanarias.org", parsed["email"])
+        self.assertEqual("http://example.org/centro", parsed["website"])
+        self.assertEqual("38700391", directory_diff.extract_code(parsed["cep_code"]))
+        self.assertEqual("38702577", directory_diff.extract_code(parsed["eoep_code"]))
+
+    def test_directory_parser_drops_the_inspector_name(self) -> None:
+        document = """
+        <div id="centro-cabecera"><b><a>CEIP X</a></b> - 35000011</div>
+        <ul class="listaOtros">
+          <li><b>Zona de inspecci&oacute;n</b>: 326-APELLIDO APELLIDO, NOMBRE</li>
+        </ul>
+        """
+        parsed = directory_diff.parse_directory_html(document)
+        self.assertEqual("326", parsed["inspection_zone_code"])
+        self.assertNotIn("APELLIDO", json.dumps(parsed))
+
+    def test_directory_parser_returns_nothing_for_an_unknown_code(self) -> None:
+        self.assertEqual({}, directory_diff.parse_directory_html("<html></html>"))
+
+    def test_directory_checks_merge_the_index_and_the_detail_card(self) -> None:
+        checks = directory_diff.build_checks(
+            {"35000011": {"Codigo": "35000011"}, "35000022": {"Codigo": "35000022"}},
+            {"35000011": {"code": "35000011", "name": "CEIP X", "phone": "928-1"}},
+            {
+                "35000011": {
+                    "code": "35000011",
+                    "present": True,
+                    "fields": {"website": "http://example.org"},
+                    "error": "",
+                }
+            },
+        )
+        merged = {check["code"]: check for check in checks}
+        self.assertTrue(merged["35000011"]["present"])
+        self.assertEqual("CEIP X", merged["35000011"]["fields"]["name"])
+        self.assertEqual(
+            "http://example.org", merged["35000011"]["fields"]["website"]
+        )
+        self.assertFalse(merged["35000022"]["present"])
 
     def test_directory_comparison_normalizes_transport_fields(self) -> None:
         catalogue = {
@@ -208,7 +278,7 @@ class CatalogueTest(unittest.TestCase):
                         "code": "38017731",
                         "name": "CIFP EN ICOD DE LOS VINOS",
                         "municipality": "ICOD DE LOS VINOS",
-                        "island": "TENERIFE",
+                        "stage": "CIFP",
                     },
                     "error": "",
                 },
@@ -238,6 +308,23 @@ class CatalogueTest(unittest.TestCase):
             "38017731, 35000011, invalid",
         )
         self.assertEqual(["35000011", "38017731"], selected)
+
+    def test_boc_publication_url_comes_from_the_guid(self) -> None:
+        self.assertEqual(
+            "https://www.gobiernodecanarias.org/boc/2026/179/3175.html",
+            check_boc.publication_url(
+                {
+                    "guid": "BOC-A-2026-179-3175",
+                    "link": "https://www.gobiernodecanarias.org/boc/2026/179/006.html",
+                }
+            ),
+        )
+        self.assertEqual(
+            "https://example.invalid/entry",
+            check_boc.publication_url(
+                {"guid": "", "link": "https://example.invalid/entry"}
+            ),
+        )
 
     def test_boc_detector_extracts_codes_and_compares_names(self) -> None:
         text = (
