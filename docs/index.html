@@ -20,17 +20,46 @@
         <a class="button secondary" href="centros.min.json">JSON ligero</a>
         <a class="button secondary" href="https://github.com/ateeducacion/listado-centros-educativos-canarias">Ver repositorio</a>
       </div>
+      <div class="catalogue-meta" aria-live="polite">
+        <div>
+          <span>Catálogo actualizado</span>
+          <strong id="catalogue-updated">Cargando…</strong>
+        </div>
+        <div>
+          <span>Registros</span>
+          <strong id="catalogue-records">—</strong>
+        </div>
+        <div>
+          <span>Activos</span>
+          <strong id="catalogue-active">—</strong>
+        </div>
+        <div>
+          <span>Inactivos</span>
+          <strong id="catalogue-inactive">—</strong>
+        </div>
+      </div>
     </div>
   </header>
 
+  <nav class="section-nav" aria-label="Secciones de la página">
+    <div class="container">
+      <a href="#info">Información</a>
+      <a href="#archivos">Archivos</a>
+      <a href="#centros">Centros</a>
+      <a href="#mapa">Mapa</a>
+      <a href="#actualizacion">Actualización</a>
+      <a href="#fuentes">Fuentes</a>
+    </div>
+  </nav>
+
   <main class="container">
-    <section>
+    <section id="info">
       <h2>Qué contiene</h2>
       <p>El archivo <code>centros.csv</code> parte del conjunto oficial de centros educativos y añade información que aparece vacía o distribuida en otras fuentes: código y nombre del Centro del Profesorado, CER, EOEP y zona de inspección. No se publica el nombre de la persona inspectora.</p>
       <p>Los CEP, CER, EOEP y oficinas Medusa se mantienen dentro del mismo listado, identificados mediante las columnas de tipo y etapa, para evitar fragmentar la información en varios archivos.</p>
     </section>
 
-    <section>
+    <section id="archivos">
       <h2>Archivos publicados</h2>
       <p>El sitio publica varios formatos derivados del mismo catálogo. Use el archivo que mejor se adapte al tipo de consumo; los formatos reducidos se generan automáticamente y no se mantienen a mano.</p>
 
@@ -96,14 +125,28 @@
       </div>
     </section>
 
-    <section>
-      <h2>Consulta</h2>
+    <section id="centros">
+      <h2>Centros</h2>
       <div class="filters">
-        <label>Buscar por código, nombre, municipio, CEP o zona
+        <label class="search-filter">Buscar por código, nombre, municipio, CEP o zona
           <input id="search" type="search" placeholder="Ej.: 38011303, La Laguna, CEP...">
         </label>
         <label>Isla
           <select id="island"><option value="">Todas</option></select>
+        </label>
+        <label>Estado
+          <select id="status-filter">
+            <option value="">Todos</option>
+            <option value="active">Activos</option>
+            <option value="inactive">Inactivos</option>
+          </select>
+        </label>
+        <label>Filas por página
+          <select id="page-size">
+            <option value="25">25</option>
+            <option value="50" selected>50</option>
+            <option value="100">100</option>
+          </select>
         </label>
       </div>
       <p id="summary" class="summary">Cargando datos…</p>
@@ -123,10 +166,17 @@
           <tbody id="results"></tbody>
         </table>
       </div>
-      <p class="hint">Seleccione cualquier fila para consultar todos sus campos. Los registros inactivos se conservan por trazabilidad histórica y se muestran atenuados y en cursiva.</p>
+      <nav class="pagination" aria-label="Paginación de centros">
+        <button id="first-page" type="button">Primera</button>
+        <button id="previous-page" type="button">Anterior</button>
+        <span id="page-status" aria-live="polite">Página 1 de 1</span>
+        <button id="next-page" type="button">Siguiente</button>
+        <button id="last-page" type="button">Última</button>
+      </nav>
+      <p class="hint">Seleccione cualquier fila para consultar todos sus campos. Los registros inactivos se conservan por trazabilidad histórica y se muestran atenuados y en cursiva. El mapa siempre incluye todos los resultados filtrados, no solo la página visible.</p>
     </section>
 
-    <section>
+    <section id="mapa">
       <h2>Mapa de Canarias</h2>
       <p>Mapa interactivo con cartografía vectorial, agrupación de centros y navegación limitada al archipiélago. No requiere claves de API.</p>
       <div id="map" class="canary-map" aria-label="Mapa interactivo de centros educativos de Canarias"></div>
@@ -147,12 +197,12 @@
       </ol>
     </section>
 
-    <section>
+    <section id="actualizacion">
       <h2>Actualización</h2>
       <p>Un workflow se ejecuta cada noche. Cuando detecta cambios en las fuentes, regenera los archivos y abre o actualiza un pull request. Ningún cambio entra directamente en la rama principal sin revisión.</p>
     </section>
 
-    <section>
+    <section id="fuentes">
       <h2>Fuentes, atribución y licencia</h2>
       <p>Información elaborada utilizando, entre otras, la obtenida del Gobierno de Canarias. Los datos han sido transformados y enriquecidos; esta publicación no es oficial ni implica respaldo del Gobierno de Canarias.</p>
       <p>El repositorio se distribuye bajo <a href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International</a>. Consulte el archivo <a href="https://github.com/ateeducacion/listado-centros-educativos-canarias/blob/main/LICENSE">LICENSE</a> y el archivo <a href="https://github.com/ateeducacion/listado-centros-educativos-canarias/blob/main/CITATION.cff">CITATION.cff</a>.</p>
