@@ -20,7 +20,7 @@ DATASET = ROOT / "centros.csv"
 OUTPUT_DIR = ROOT / "dist"
 OUTPUT_JSON = OUTPUT_DIR / "boc-watch.json"
 OUTPUT_MD = OUTPUT_DIR / "boc-watch.md"
-RSS_URL = "https://www.gobiernodecanarias.org/boc/feeds/consejeria/educacion.rss"
+RSS_URL = "https://www.gobiernodecanarias.org/boc/feeds/capitulo/otras_resoluciones.rss"
 DIRECTORY_URL = (
     "https://www.gobiernodecanarias.org/educacion/centroseducativos/"
     "buscador-centros-openlayers/resultados/detalle"
