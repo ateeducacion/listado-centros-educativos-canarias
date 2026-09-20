@@ -643,7 +643,7 @@ def main() -> None:
     workers = max(1, min(args.workers, 8))
     delay = max(0.0, args.delay)
 
-    if 1 == workers:
+    if workers == 1:
         for index, code in enumerate(codes):
             try:
                 checks.append(fetch_directory(code, args.timeout))
