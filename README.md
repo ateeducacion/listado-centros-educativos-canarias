@@ -109,7 +109,7 @@ El workflow nocturno consulta las fuentes oficiales. Cuando detecta cambios:
 - crea una rama automática;
 - abre o actualiza un pull request con el resumen de altas, bajas y modificaciones.
 
-Además, el workflow **Directory watch** revisa semanalmente un lote rotatorio de hasta 150 códigos conocidos contra sus fichas públicas del directorio operativo. Las peticiones son secuenciales y se espera al menos un segundo entre consultas. Con el volumen actual, el barrido completo se reparte aproximadamente entre diez ejecuciones semanales, evitando generar una ráfaga de unas 1.500 peticiones contra el servicio oficial. El informe queda disponible como artefacto de GitHub Actions y en el resumen del job.
+Además, el workflow **Directory watch** revisa semanalmente un lote rotatorio de hasta 150 códigos conocidos contra sus fichas públicas del directorio operativo. Las peticiones son secuenciales, se espera al menos un segundo entre consultas y los runs automáticos no reintentan una ficha fallida. Con el volumen actual, el barrido completo se reparte aproximadamente entre diez ejecuciones semanales, evitando generar una ráfaga de unas 1.500 peticiones contra el servicio oficial. El informe queda disponible como artefacto de GitHub Actions y en el resumen del job.
 
 Los cambios no se incorporan directamente a `main`: deben revisarse y fusionarse mediante pull request. La ausencia de un código en el directorio **no marca un centro como inactivo automáticamente**; una baja requiere una fuente explícita y revisable.
 
