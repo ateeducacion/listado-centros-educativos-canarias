@@ -13,6 +13,10 @@ const normalized = (value) => text(value)
   .replace(/[\u0300-\u036f]/g, "")
   .toLowerCase();
 
+const isActive = (row) => !["0", "false", "no", "inactive", "inactivo"]
+  .includes(normalized(row.Activo || "1"));
+const statusLabel = (row) => (isActive(row) ? "Activo" : "Inactivo");
+
 function coordinates(row) {
   const latitude = Number.parseFloat(text(row.Latitud).replace(",", "."));
   const longitude = Number.parseFloat(text(row.Longitud).replace(",", "."));
@@ -89,6 +93,7 @@ function featureCollection(rows) {
           municipality: text(row.Municipio),
           island: text(row.Isla),
           stage: text(row.DesEtapaCentro),
+          status: isActive(row) ? "active" : "inactive",
         },
       }];
     }),
@@ -103,7 +108,12 @@ function popupContent(properties) {
   title.textContent = properties.name || "Centro educativo";
 
   const details = document.createElement("span");
-  details.textContent = [properties.code, properties.municipality, properties.island]
+  details.textContent = [
+    properties.code,
+    properties.municipality,
+    properties.island,
+    properties.status === "inactive" ? "Inactivo" : "",
+  ]
     .filter(Boolean)
     .join(" · ");
 
@@ -180,7 +190,13 @@ function addMapLayers() {
     source: "centres",
     filter: ["!", ["has", "point_count"]],
     paint: {
-      "circle-color": "#0b76b7",
+      "circle-color": [
+        "match",
+        ["get", "status"],
+        "inactive",
+        "#7b6b5d",
+        "#0b76b7",
+      ],
       "circle-radius": ["interpolate", ["linear"], ["zoom"], 7, 4, 13, 7],
       "circle-stroke-width": 2,
       "circle-stroke-color": "#ffffff",
@@ -256,7 +272,10 @@ function initialiseMap() {
 
 function renderMap() {
   const mappedRows = state.filtered.filter((row) => coordinates(row));
-  document.querySelector("#map-summary").textContent = `${mappedRows.length} resultados con coordenadas disponibles.`;
+  const inactiveMapped = mappedRows.filter((row) => !isActive(row)).length;
+  const inactiveText = inactiveMapped > 0 ? ` (${inactiveMapped} inactivos)` : "";
+  document.querySelector("#map-summary").textContent =
+    `${mappedRows.length} resultados con coordenadas disponibles${inactiveText}.`;
 
   if (!state.mapReady) {
     return;
@@ -298,9 +317,14 @@ function render() {
   const results = document.querySelector("#results");
   results.replaceChildren(...state.filtered.slice(0, 250).map((row) => {
     const tr = document.createElement("tr");
+    const active = isActive(row);
     tr.tabIndex = 0;
     tr.setAttribute("role", "button");
-    tr.setAttribute("aria-label", `Ver todos los datos de ${text(row.Denominacion)}`);
+    tr.classList.toggle("inactive-row", !active);
+    tr.setAttribute(
+      "aria-label",
+      `Ver todos los datos de ${text(row.Denominacion)} (${statusLabel(row)})`,
+    );
     tr.addEventListener("click", () => showDetail(row));
     tr.addEventListener("keydown", (event) => {
       if (event.key === "Enter" || event.key === " ") {
@@ -321,10 +345,21 @@ function render() {
       td.textContent = text(value);
       tr.appendChild(td);
     });
+
+    const statusCell = document.createElement("td");
+    const status = document.createElement("span");
+    status.className = `status-badge ${active ? "active" : "inactive"}`;
+    status.textContent = statusLabel(row);
+    statusCell.appendChild(status);
+    tr.appendChild(statusCell);
+
     return tr;
   }));
 
-  document.querySelector("#summary").textContent = `${state.filtered.length} resultados. Se muestran como máximo 250 filas; el mapa incluye todos los resultados filtrados con coordenadas.`;
+  const inactiveCount = state.filtered.filter((row) => !isActive(row)).length;
+  const inactiveSummary = inactiveCount > 0 ? ` · ${inactiveCount} inactivos` : "";
+  document.querySelector("#summary").textContent =
+    `${state.filtered.length} resultados${inactiveSummary}. Se muestran como máximo 250 filas; el mapa incluye todos los resultados filtrados con coordenadas.`;
   renderMap();
 }
 
