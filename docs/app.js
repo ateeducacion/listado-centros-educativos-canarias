@@ -1,3 +1,30 @@
+const root = document.documentElement;
+const themeToggle = document.querySelector("#theme-toggle");
+const storedTheme = window.localStorage.getItem("centres-theme");
+
+if (storedTheme) {
+  root.setAttribute("data-theme", storedTheme);
+}
+
+function currentTheme() {
+  const explicit = root.getAttribute("data-theme");
+  if (explicit) {
+    return explicit;
+  }
+
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
+}
+
+if (themeToggle) {
+  themeToggle.addEventListener("click", () => {
+    const next = currentTheme() === "dark" ? "light" : "dark";
+    root.setAttribute("data-theme", next);
+    window.localStorage.setItem("centres-theme", next);
+  });
+}
+
 const state = {
   rows: [],
   filtered: [],
