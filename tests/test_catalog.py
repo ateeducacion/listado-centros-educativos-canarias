@@ -59,6 +59,33 @@ class CatalogueTest(unittest.TestCase):
         self.assertEqual("Datos Abiertos de Canarias", merged[0]["FuenteCentro"])
         self.assertEqual("data/additional_centres.csv", merged[1]["FuenteCentro"])
 
+    def test_cep_assignment_urls_match_canonical_cep_websites(self) -> None:
+        with (ROOT / "data" / "additional_centres.csv").open(
+            encoding="utf-8-sig",
+            newline="",
+        ) as handle:
+            cep_websites = {
+                row["Codigo"].strip(): row["PaginaWeb"].strip()
+                for row in csv.DictReader(handle)
+                if row["DesEtapaCentro"].strip().upper() == "C.PROFES."
+            }
+
+        self.assertEqual(14, len(cep_websites))
+        self.assertTrue(all(cep_websites.values()))
+
+        with (ROOT / "data" / "cep_assignments.csv").open(
+            encoding="utf-8-sig",
+            newline="",
+        ) as handle:
+            for row in csv.DictReader(handle):
+                cep_code = row["CentroProfesoresCodigo"].strip()
+                self.assertIn(cep_code, cep_websites)
+                self.assertEqual(
+                    cep_websites[cep_code],
+                    row["URLWebCEP"].strip(),
+                    f"CEP URL mismatch for {cep_code}",
+                )
+
     def test_consumer_exports_filter_inactive_and_missing_coordinates(self) -> None:
         rows = [
             {
