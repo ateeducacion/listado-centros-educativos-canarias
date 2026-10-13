@@ -28,10 +28,14 @@
 </head>
 <body>
   <header class="site-header">
-    <a class="brand" href="./" aria-label="Listado de centros educativos de Canarias">
-      <span class="brand-mark" aria-hidden="true">
-        <span></span><span></span><span></span><span></span>
-      </span>
+    <a class="brand" href="./" aria-label="Listado de centros educativos de Canarias · Área de Tecnología Educativa">
+      <img
+        class="brand-logo"
+        src="assets/img/ate-logo.png"
+        alt="Área de Tecnología Educativa"
+        width="545"
+        height="563"
+      >
       <span>Listado de centros educativos de Canarias</span>
     </a>
     <div class="header-actions">
@@ -133,7 +137,21 @@
           <div class="file-description">
             <p>Archivo principal y versionado del repositorio. Contiene todos los campos disponibles y enriquecidos: datos generales, CEP, CER, EOEP, zona de inspección, estado de vigencia y procedencia de las correcciones.</p>
             <p>Es la opción adecuada para hojas de cálculo, tratamiento masivo y análisis de datos.</p>
-            <a href="centros.csv">Descargar <code>centros.csv</code> →</a>
+            <div class="file-actions">
+              <a class="btn btn-primary" href="centros.csv" download>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M12 3v12M7 10l5 5 5-5M5 21h14"></path>
+                </svg>
+                Descargar
+              </a>
+              <button type="button" class="btn btn-ghost copy-link" data-href="centros.csv" aria-label="Copiar enlace a centros.csv">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <rect x="9" y="9" width="12" height="12" rx="2"></rect>
+                  <path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"></path>
+                </svg>
+                Copiar enlace
+              </button>
+            </div>
           </div>
         </details>
 
@@ -145,7 +163,21 @@
           <div class="file-description">
             <p>Representación JSON del catálogo completo, con los mismos registros y campos que el CSV. Este es el archivo que utiliza el visualizador de esta página.</p>
             <p>Es útil cuando una aplicación necesita acceder a toda la información de cada centro sin interpretar CSV.</p>
-            <a href="centros.json">Abrir <code>centros.json</code> →</a>
+            <div class="file-actions">
+              <a class="btn btn-primary" href="centros.json" download>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M12 3v12M7 10l5 5 5-5M5 21h14"></path>
+                </svg>
+                Descargar
+              </a>
+              <button type="button" class="btn btn-ghost copy-link" data-href="centros.json" aria-label="Copiar enlace a centros.json">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <rect x="9" y="9" width="12" height="12" rx="2"></rect>
+                  <path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"></path>
+                </svg>
+                Copiar enlace
+              </button>
+            </div>
           </div>
         </details>
 
@@ -157,7 +189,21 @@
           <div class="file-description">
             <p>Contrato reducido pensado para formularios y aplicaciones. Publica únicamente código, denominación, isla, municipio, tipo y estado activo/inactivo.</p>
             <p>Es la opción recomendada cuando solo se necesita seleccionar o identificar centros sin descargar el catálogo completo.</p>
-            <a href="centros.min.json">Abrir <code>centros.min.json</code> →</a>
+            <div class="file-actions">
+              <a class="btn btn-primary" href="centros.min.json" download>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M12 3v12M7 10l5 5 5-5M5 21h14"></path>
+                </svg>
+                Descargar
+              </a>
+              <button type="button" class="btn btn-ghost copy-link" data-href="centros.min.json" aria-label="Copiar enlace a centros.min.json">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <rect x="9" y="9" width="12" height="12" rx="2"></rect>
+                  <path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"></path>
+                </svg>
+                Copiar enlace
+              </button>
+            </div>
           </div>
         </details>
 
@@ -169,7 +215,21 @@
           <div class="file-description">
             <p>Contrato específico para el proyecto de distancias. Incluye únicamente centros activos con coordenadas válidas y los campos necesarios para construir la matriz de rutas.</p>
             <p>No debe utilizarse como listado histórico completo porque excluye registros inactivos y centros sin coordenadas utilizables.</p>
-            <a href="centros-distancias.csv">Descargar <code>centros-distancias.csv</code> →</a>
+            <div class="file-actions">
+              <a class="btn btn-primary" href="centros-distancias.csv" download>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M12 3v12M7 10l5 5 5-5M5 21h14"></path>
+                </svg>
+                Descargar
+              </a>
+              <button type="button" class="btn btn-ghost copy-link" data-href="centros-distancias.csv" aria-label="Copiar enlace a centros-distancias.csv">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <rect x="9" y="9" width="12" height="12" rx="2"></rect>
+                  <path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"></path>
+                </svg>
+                Copiar enlace
+              </button>
+            </div>
           </div>
         </details>
 
@@ -180,7 +240,21 @@
           </summary>
           <div class="file-description">
             <p>Describe la versión del contrato, los recuentos de registros y los SHA-256 de los artefactos reducidos. Los consumidores automáticos pueden usarlo para comprobar si el catálogo ha cambiado y verificar la integridad de una descarga.</p>
-            <a href="manifest.json">Abrir <code>manifest.json</code> →</a>
+            <div class="file-actions">
+              <a class="btn btn-primary" href="manifest.json" download>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M12 3v12M7 10l5 5 5-5M5 21h14"></path>
+                </svg>
+                Descargar
+              </a>
+              <button type="button" class="btn btn-ghost copy-link" data-href="manifest.json" aria-label="Copiar enlace a manifest.json">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <rect x="9" y="9" width="12" height="12" rx="2"></rect>
+                  <path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"></path>
+                </svg>
+                Copiar enlace
+              </button>
+            </div>
           </div>
         </details>
       </div>
@@ -318,6 +392,19 @@
     </form>
     <div id="detail-content" class="detail-grid"></div>
   </dialog>
+
+  <div class="toast-container" aria-live="polite" aria-atomic="true">
+    <div id="copy-toast" class="toast" role="status" hidden>
+      <svg class="toast-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M5 12l5 5 9-10"></path>
+      </svg>
+      <div class="toast-body">
+        <strong id="copy-toast-title">Enlace copiado</strong>
+        <span id="copy-toast-url" class="toast-url"></span>
+      </div>
+      <button type="button" class="toast-close" aria-label="Cerrar aviso">×</button>
+    </div>
+  </div>
 
   <footer class="site-footer">
     <div class="foot-inner">
