@@ -25,6 +25,60 @@ if (themeToggle) {
   });
 }
 
+const copyToast = document.querySelector("#copy-toast");
+let copyToastTimer = null;
+
+function hideCopyToast() {
+  copyToast.classList.remove("show");
+  window.clearTimeout(copyToastTimer);
+  copyToastTimer = window.setTimeout(() => {
+    copyToast.hidden = true;
+  }, 200);
+}
+
+function showCopyToast(title, detail, isError = false) {
+  window.clearTimeout(copyToastTimer);
+  copyToast.classList.toggle("is-error", isError);
+  document.querySelector("#copy-toast-title").textContent = title;
+  document.querySelector("#copy-toast-url").textContent = detail;
+  copyToast.hidden = false;
+  window.requestAnimationFrame(() => copyToast.classList.add("show"));
+  copyToastTimer = window.setTimeout(hideCopyToast, 3500);
+}
+
+async function copyText(value) {
+  if (navigator.clipboard && window.isSecureContext) {
+    await navigator.clipboard.writeText(value);
+    return;
+  }
+
+  const textarea = document.createElement("textarea");
+  textarea.value = value;
+  textarea.setAttribute("readonly", "");
+  textarea.style.position = "fixed";
+  textarea.style.opacity = "0";
+  document.body.appendChild(textarea);
+  textarea.select();
+  const copied = document.execCommand("copy");
+  textarea.remove();
+  if (!copied) {
+    throw new Error("No se pudo copiar");
+  }
+}
+
+copyToast.querySelector(".toast-close").addEventListener("click", hideCopyToast);
+document.querySelectorAll(".copy-link").forEach((button) => {
+  button.addEventListener("click", async () => {
+    const url = new URL(button.dataset.href, window.location.href).href;
+    try {
+      await copyText(url);
+      showCopyToast("Enlace copiado", url);
+    } catch {
+      showCopyToast("No se pudo copiar el enlace", url, true);
+    }
+  });
+});
+
 const state = {
   rows: [],
   filtered: [],
