@@ -25,6 +25,9 @@ DATASET = ROOT / "centros.csv"
 OUTPUT_DIR = ROOT / "dist"
 OUTPUT_JSON = OUTPUT_DIR / "boc-watch.json"
 OUTPUT_MD = OUTPUT_DIR / "boc-watch.md"
+# Tracked on purpose: while it exists the refresh workflow sees a diff and opens
+# a pull request, so a pending BOC change is reviewed even if the data is equal.
+PENDING_MD = ROOT / "data" / "boc-pendiente.md"
 RSS_URL = "https://www.gobiernodecanarias.org/boc/feeds/capitulo/otras_resoluciones.rss"
 USER_AGENT = "listado-centros-educativos-canarias/1.0"
 CENTER_CODE_RE = re.compile(r"\b(?:35|38)\d{6}\b")
@@ -162,6 +165,34 @@ def compare_directory(
     return issues
 
 
+def pending_report(candidates: list[dict[str, Any]]) -> str:
+    """List only the BOC checks with discrepancies; empty when none remain."""
+    lines: list[str] = []
+    for candidate in candidates:
+        checks = [check for check in candidate["checks"] if check["issues"]]
+        if not checks:
+            continue
+        lines.extend([f"## {candidate['title']}", "", candidate["url"], ""])
+        for check in checks:
+            lines.append(
+                f"- `{check['code']}`: {', '.join(check['issues'])}; "
+                f"catálogo=`{check['catalogue_name']}`; "
+                f"directorio=`{check['directory_name']}`"
+            )
+        lines.append("")
+    if not lines:
+        return ""
+    header = [
+        "# Cambios del BOC pendientes de revisar",
+        "",
+        "Generado por `scripts/check_boc.py`. Añade las correcciones en",
+        "`data/centre_field_overrides.csv` o `data/centre_overrides.csv`;",
+        "este archivo desaparece solo cuando no quedan discrepancias.",
+        "",
+    ]
+    return "\n".join(header + lines).rstrip() + "\n"
+
+
 def main() -> None:
     """Check recent BOC entries and write a review report without changing data."""
     catalog = load_catalog()
@@ -260,6 +291,11 @@ def main() -> None:
             )
         lines.append("")
     OUTPUT_MD.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
+    pending = pending_report(candidates)
+    if pending:
+        PENDING_MD.write_text(pending, encoding="utf-8")
+    else:
+        PENDING_MD.unlink(missing_ok=True)
     print(f"BOC watch: {len(candidates)} candidates, {attention_count} checks need review")
 
 
