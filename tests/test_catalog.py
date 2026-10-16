@@ -366,6 +366,28 @@ class CatalogueTest(unittest.TestCase):
         )
         self.assertIn("name_differs_from_directory", issues)
 
+    def test_boc_pending_report_lists_only_discrepancies(self) -> None:
+        def candidate(issues: list[str]) -> dict:
+            return {
+                "title": f"ORDEN {len(issues)}",
+                "url": "https://example.invalid/boc",
+                "checks": [
+                    {
+                        "code": "38016763",
+                        "issues": issues,
+                        "catalogue_name": "CIFP EN ADEJE",
+                        "directory_name": "CIFP GRAN SUR",
+                    }
+                ],
+            }
+
+        self.assertEqual("", check_boc.pending_report([candidate([])]))
+        report = check_boc.pending_report(
+            [candidate([]), candidate(["name_differs_from_directory"])]
+        )
+        self.assertIn("ORDEN 1", report)
+        self.assertNotIn("ORDEN 0", report)
+
 
 if __name__ == "__main__":
     unittest.main()
