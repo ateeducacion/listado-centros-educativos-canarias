@@ -110,22 +110,29 @@ def parse_coded_value(value: str) -> tuple[str, str]:
 def load_cep_assignments() -> tuple[
     dict[str, dict[str, str]],
     dict[tuple[str, str], dict[str, str]],
+    dict[str, str],
 ]:
     """Load exact and territorial CEP assignment rules."""
     by_code: dict[str, dict[str, str]] = {}
     by_area: dict[tuple[str, str], dict[str, str]] = {}
+    url_by_cep: dict[str, str] = {}
 
     for row in read_local_csv(CEP_ASSIGNMENTS):
         code = clean(row.get("Codigo"))
         island = normalized_key(row.get("Isla"))
         municipality = normalized_key(row.get("Municipio"))
+        cep_code = clean(row.get("CentroProfesoresCodigo"))
+        cep_url = clean(row.get("URLWebCEP"))
+
+        if cep_code and cep_url:
+            url_by_cep.setdefault(cep_code, cep_url)
 
         if code:
             by_code[code] = row
         elif island and municipality:
             by_area[(island, municipality)] = row
 
-    return by_code, by_area
+    return by_code, by_area, url_by_cep
 
 
 def load_centre_overrides() -> dict[str, dict[str, str]]:
@@ -191,6 +198,7 @@ def find_cep_assignment(
     row: dict[str, str],
     by_code: dict[str, dict[str, str]],
     by_area: dict[tuple[str, str], dict[str, str]],
+    url_by_cep: dict[str, str],
 ) -> dict[str, str]:
     """Resolve a CEP assignment using exact, explicit and territorial data."""
     code = first(row, "Codigo", "CodigoCentro")
@@ -199,10 +207,12 @@ def find_cep_assignment(
 
     explicit_code, explicit_name = parse_coded_value(first(row, "CentroProfesores"))
     if explicit_code:
+        # The open dataset still publishes the legacy CEP addresses, so the
+        # curated table wins whenever it knows this CEP code.
         return {
             "CentroProfesoresCodigo": explicit_code,
             "CentroProfesoresNombre": explicit_name,
-            "URLWebCEP": first(row, "URLWebCEP"),
+            "URLWebCEP": url_by_cep.get(explicit_code) or first(row, "URLWebCEP"),
         }
 
     area = (
@@ -297,7 +307,7 @@ def main() -> None:
         )
         for row in centre_zones
     }
-    cep_by_code, cep_by_area = load_cep_assignments()
+    cep_by_code, cep_by_area, cep_url_by_code = load_cep_assignments()
 
     source_fields = list(official_centres[0].keys()) if official_centres else []
     for row in (*additional_centres, *directory_centres):
@@ -324,7 +334,9 @@ def main() -> None:
     for row in centres:
         code = first(row, "Codigo", "CodigoCentro")
         stage = first(row, "DesEtapaCentro").upper()
-        assignment = find_cep_assignment(row, cep_by_code, cep_by_area)
+        assignment = find_cep_assignment(
+            row, cep_by_code, cep_by_area, cep_url_by_code
+        )
         item = {key: clean(value) for key, value in row.items()}
         zone_code = zone_by_centre.get(code, "")
         zone_source = OFFICIAL_SOURCE if zone_code else ""
@@ -338,7 +350,8 @@ def main() -> None:
             assignment = {
                 "CentroProfesoresCodigo": code,
                 "CentroProfesoresNombre": first(row, "Denominacion"),
-                "URLWebCEP": first(row, "PaginaWeb", "URLWebCEP"),
+                "URLWebCEP": cep_url_by_code.get(code)
+                or first(row, "PaginaWeb", "URLWebCEP"),
             }
 
         item.update(
