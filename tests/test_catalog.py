@@ -388,6 +388,38 @@ class CatalogueTest(unittest.TestCase):
         self.assertIn("ORDEN 1", report)
         self.assertNotIn("ORDEN 0", report)
 
+    def test_curated_cep_url_wins_over_the_published_legacy_address(self) -> None:
+        row = {
+            "Codigo": "38000241",
+            "CentroProfesores": "38700391 - C.PROFES. NORTE DE TENERIFE",
+            "URLWebCEP": "http://www.gobiernodecanarias.org/educacion/cepnortedetenerife",
+        }
+        canonical = "https://www3.gobiernodecanarias.org/medusa/edublog/cprofesnortedetenerife/"
+
+        assignment = update_data.find_cep_assignment(
+            row, {}, {}, {"38700391": canonical}
+        )
+        self.assertEqual(canonical, assignment["URLWebCEP"])
+
+        without_curated = update_data.find_cep_assignment(row, {}, {}, {})
+        self.assertEqual(row["URLWebCEP"], without_curated["URLWebCEP"])
+
+    def test_catalogue_only_publishes_curated_cep_addresses(self) -> None:
+        curated = {
+            row["URLWebCEP"].strip()
+            for row in csv.DictReader(
+                (ROOT / "data" / "cep_assignments.csv").open(encoding="utf-8-sig")
+            )
+            if row["URLWebCEP"].strip()
+        }
+        published = {
+            row["URLWebCEP"]
+            for row in json.loads((ROOT / "centros.json").read_text(encoding="utf-8"))
+            if row["CentroProfesoresCodigo"]
+        }
+        self.assertTrue(published)
+        self.assertEqual(set(), published - curated)
+
 
 if __name__ == "__main__":
     unittest.main()
