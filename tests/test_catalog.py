@@ -5,6 +5,7 @@ import importlib.util
 import json
 import tempfile
 import unittest
+import unittest.mock
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -175,6 +176,49 @@ class CatalogueTest(unittest.TestCase):
             with csv_path.open(encoding="utf-8", newline="") as handle:
                 exported = list(csv.DictReader(handle))
             self.assertEqual(["35000011"], [row["Codigo"] for row in exported])
+
+    def test_manifest_covers_every_published_file(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            temp_path = Path(temp)
+            dataset = temp_path / "centros.csv"
+            dataset_json = temp_path / "centros.json"
+            min_json = temp_path / "centros.min.json"
+            distances = temp_path / "centros-distancias.csv"
+            dataset.write_text("Codigo\n35000011\n", encoding="utf-8")
+            dataset_json.write_text('[{"Codigo": "35000011"}]', encoding="utf-8")
+            min_json.write_text("[]\n", encoding="utf-8")
+            distances.write_text("Codigo\n", encoding="utf-8")
+
+            with unittest.mock.patch.multiple(
+                export_consumers,
+                DATASET=dataset,
+                DATASET_JSON=dataset_json,
+                MIN_JSON=min_json,
+                DISTANCES_CSV=distances,
+            ):
+                files = export_consumers.published_files(0, 0, 1)
+                self.assertEqual(
+                    {
+                        "centros.csv",
+                        "centros.json",
+                        "centros.min.json",
+                        "centros-distancias.csv",
+                    },
+                    set(files),
+                )
+                self.assertEqual(1, files["centros.csv"]["records"])
+                self.assertEqual(1, files["centros.json"]["records"])
+                self.assertEqual(
+                    dataset.stat().st_size, files["centros.csv"]["bytes"]
+                )
+                self.assertEqual(64, len(files["centros.csv"]["sha256"]))
+
+                dataset_json.unlink()
+                self.assertNotIn(
+                    "centros.json",
+                    export_consumers.published_files(0, 0, 1),
+                    "centros.json is optional, as in the Pages workflow",
+                )
 
     def test_directory_parser_reads_a_detail_card(self) -> None:
         document = """

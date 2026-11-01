@@ -330,16 +330,23 @@ def validate_generated(catalogue_rows: list[dict[str, str]]) -> None:
     files = manifest.get("files")
     if not isinstance(files, dict):
         fail("manifest.json has no files object")
+    # Every file the Pages workflow publishes, the canonical dataset included:
+    # a consumer that downloads one must be able to verify it from here.
     expected_files = {
+        "centros.csv": ROOT / "centros.csv",
         "centros.min.json": min_path,
         "centros-distancias.csv": distances_path,
     }
+    if (ROOT / "centros.json").exists():
+        expected_files["centros.json"] = ROOT / "centros.json"
     for name, path in expected_files.items():
         entry = files.get(name)
         if not isinstance(entry, dict):
             fail(f"manifest.json has no entry for {name}")
         if entry.get("sha256") != sha256(path):
             fail(f"manifest.json SHA-256 does not match {name}")
+        if entry.get("bytes") != path.stat().st_size:
+            fail(f"manifest.json byte count does not match {name}")
 
     print(
         "Validated generated artefacts: "
