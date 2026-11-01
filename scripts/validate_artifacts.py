@@ -18,7 +18,15 @@ DATA_DIR = ROOT / "data"
 DIST_DIR = ROOT / "dist"
 
 CENTRE_CODE_RE = re.compile(r"^\d{8}$")
-MIN_JSON_FIELDS = {"code", "name", "island", "municipality", "type", "active"}
+MIN_JSON_FIELDS = {
+    "code",
+    "name",
+    "island",
+    "municipality",
+    "type",
+    "cep",
+    "active",
+}
 DISTANCE_FIELDS = [
     "Codigo",
     "Denominacion",
@@ -264,6 +272,7 @@ def validate_min_json(
             "island": clean(source.get("Isla")),
             "municipality": clean(source.get("Municipio")),
             "type": clean(source.get("DesEtapaCentro")),
+            "cep": clean(source.get("CentroProfesoresCodigo")),
             "active": active_from_row(source),
         }
         if item != expected:

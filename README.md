@@ -142,7 +142,7 @@ La columna `CamposCorregidos` enumera, en cada registro, los campos que proceden
 
 GitHub Pages publica, además del conjunto completo:
 
-- `centros.min.json`: catálogo ligero con código, denominación, isla, municipio, tipo y estado; pensado para formularios y aplicaciones web.
+- `centros.min.json`: catálogo ligero con código, denominación, isla, municipio, tipo, código del CEP asociado y estado; pensado para formularios y aplicaciones web. El CEP va como código (`cep`) y no como nombre, porque el nombre de un CEP puede cambiar y el código, no.
 - `centros-distancias.csv`: únicamente centros activos con coordenadas válidas, con el esquema que necesita el proyecto de distancias.
 - `manifest.json`: versión de esquema, recuentos y, para **cada fichero publicado**
   (`centros.csv`, `centros.json`, `centros.min.json` y `centros-distancias.csv`),

@@ -110,6 +110,7 @@ def build_min_json(rows: list[dict[str, str]], destination: Path) -> int:
             "island": clean(row.get("Isla")),
             "municipality": clean(row.get("Municipio")),
             "type": clean(row.get("DesEtapaCentro")),
+            "cep": clean(row.get("CentroProfesoresCodigo")),
             "active": is_active(row),
         }
         for row in rows
