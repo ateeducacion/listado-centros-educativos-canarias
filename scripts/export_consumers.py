@@ -13,6 +13,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 DATASET = ROOT / "centros.csv"
+DATASET_JSON = ROOT / "centros.json"
 OUTPUT_DIR = ROOT / "dist"
 MIN_JSON = OUTPUT_DIR / "centros.min.json"
 DISTANCES_CSV = OUTPUT_DIR / "centros-distancias.csv"
@@ -61,6 +62,37 @@ def sha256(path: Path) -> str:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def file_entry(path: Path, records: int) -> dict[str, Any]:
+    """Return the manifest entry of one published file."""
+    return {
+        "sha256": sha256(path),
+        "bytes": path.stat().st_size,
+        "records": records,
+    }
+
+
+def published_files(
+    catalogue_count: int, distance_count: int, records: int
+) -> dict[str, dict[str, Any]]:
+    """Manifest entries for every file Pages publishes, in download order.
+
+    The canonical dataset is published too, so a consumer that downloads
+    centros.csv or centros.json can verify it against the manifest instead of
+    trusting the transfer. centros.json is optional: the Pages workflow falls
+    back to an empty array when it is missing, and so does this.
+    """
+    entries = {
+        "centros.csv": file_entry(DATASET, records),
+        "centros.min.json": file_entry(MIN_JSON, catalogue_count),
+        "centros-distancias.csv": file_entry(DISTANCES_CSV, distance_count),
+    }
+    if DATASET_JSON.exists():
+        entries["centros.json"] = file_entry(
+            DATASET_JSON, len(json.loads(DATASET_JSON.read_text(encoding="utf-8")))
+        )
+    return entries
 
 
 def load_rows(path: Path = DATASET) -> list[dict[str, str]]:
@@ -125,16 +157,7 @@ def main() -> None:
         "active_records": active_count,
         "catalogue_records": catalogue_count,
         "distance_records": distance_count,
-        "files": {
-            "centros.min.json": {
-                "sha256": sha256(MIN_JSON),
-                "records": catalogue_count,
-            },
-            "centros-distancias.csv": {
-                "sha256": sha256(DISTANCES_CSV),
-                "records": distance_count,
-            },
-        },
+        "files": published_files(catalogue_count, distance_count, len(rows)),
     }
     MANIFEST.write_text(
         json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True) + "\n",

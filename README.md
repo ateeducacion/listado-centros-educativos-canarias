@@ -144,7 +144,10 @@ GitHub Pages publica, además del conjunto completo:
 
 - `centros.min.json`: catálogo ligero con código, denominación, isla, municipio, tipo y estado; pensado para formularios y aplicaciones web.
 - `centros-distancias.csv`: únicamente centros activos con coordenadas válidas, con el esquema que necesita el proyecto de distancias.
-- `manifest.json`: versión de esquema, recuentos y SHA-256 de los artefactos anteriores.
+- `manifest.json`: versión de esquema, recuentos y, para **cada fichero publicado**
+  (`centros.csv`, `centros.json`, `centros.min.json` y `centros-distancias.csv`),
+  su SHA-256, su tamaño en bytes y su número de registros. Un consumidor puede así
+  comprobar la descarga del conjunto completo, no solo la de los derivados.
 
 Los consumidores deben usar estos contratos en lugar de volver a consultar directamente las fuentes upstream.
 
