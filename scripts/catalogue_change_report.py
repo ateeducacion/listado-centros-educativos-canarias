@@ -138,7 +138,10 @@ def make_report(
             "",
             "| Field | Before | After |",
             "| --- | --- | --- |",
-            *(f"| `{field}` | {cell(previous)} | {cell(current)} |" for field, previous, current in changes),
+            *(
+                f"| `{field}` | {cell(previous)} | {cell(current)} |"
+                for field, previous, current in changes
+            ),
             "",
         ]
         if len("\n".join(lines + section)) > MAX_BODY_LENGTH - 5_000:
@@ -151,7 +154,10 @@ def make_report(
 
     lines.extend(["", "## Formatting-only changes", ""])
     if formatting:
-        lines.append("Values differing only by `NULL`/empty representation or surrounding whitespace:")
+        lines.append(
+            "Values differing only by `NULL`/empty representation "
+            "or surrounding whitespace:"
+        )
         lines.extend(["", "| Field | Values changed |", "| --- | ---: |"])
         lines.extend(
             f"| `{field}` | {count} |"
