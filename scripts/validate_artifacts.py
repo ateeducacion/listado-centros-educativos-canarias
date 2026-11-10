@@ -25,6 +25,7 @@ MIN_JSON_FIELDS = {
     "municipality",
     "type",
     "cep",
+    "eoep",
     "active",
 }
 DISTANCE_FIELDS = [
@@ -51,6 +52,12 @@ def fail(message: str) -> None:
 def clean(value: Any) -> str:
     """Normalize a scalar value for CSV/JSON comparisons."""
     return "" if value is None else str(value)
+
+
+def eoep_code(row: dict[str, str]) -> str:
+    """Return the code of the centre's EOEP, taken from «code - name»."""
+    code = clean(row.get("EOEP")).strip().split(" - ", 1)[0].strip()
+    return code if len(code) == 8 and code.isdigit() else ""
 
 
 def read_csv(path: Path) -> tuple[list[str], list[dict[str, str]]]:
@@ -273,6 +280,7 @@ def validate_min_json(
             "municipality": clean(source.get("Municipio")),
             "type": clean(source.get("DesEtapaCentro")),
             "cep": clean(source.get("CentroProfesoresCodigo")),
+            "eoep": eoep_code(source),
             "active": active_from_row(source),
         }
         if item != expected:
