@@ -7,6 +7,7 @@ on:
     paths:
       - "data/**"
       - "scripts/update_data.py"
+      - "scripts/catalogue_change_report.py"
       - "scripts/validate_data.py"
       - "scripts/export_consumers.py"
       - "scripts/check_boc.py"
@@ -80,6 +81,11 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v7
 
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
       - name: Drop stale BOC report
         run: rm -f data/boc-pendiente.md
 
@@ -89,6 +95,14 @@ jobs:
           name: catalogue-refresh
           path: .
 
+      - name: Generate PR change report
+        run: |
+          git show HEAD:centros.csv > "$RUNNER_TEMP/centros-before.csv"
+          python scripts/catalogue_change_report.py \
+            --before "$RUNNER_TEMP/centros-before.csv" \
+            --after centros.csv \
+            --output "$RUNNER_TEMP/catalogue-pr.md"
+
       - name: Create update pull request
         uses: peter-evans/create-pull-request@v8
         with:
@@ -96,31 +110,5 @@ jobs:
           delete-branch: true
           commit-message: "Actualizar catálogo de centros"
           title: "Actualizar catálogo de centros"
-          body: |
-            ## Resumen
-
-            Actualización automática generada a partir de las fuentes públicas
-            actuales del Gobierno de Canarias y de las correcciones revisadas
-            y versionadas del repositorio.
-
-            ## Archivos regenerados
-
-            - `centros.csv`
-            - `centros.json`
-
-            Los contratos para consumidores se regeneran durante el despliegue
-            de GitHub Pages a partir de estos archivos.
-
-            ## Validación
-
-            - `python scripts/update_data.py`
-            - `python scripts/validate_data.py`
-            - `python scripts/export_consumers.py`
-            - `python scripts/check_boc.py`
-
-            El informe del BOC es un detector de posibles desfases y puede
-            contrastar únicamente los códigos encontrados en publicaciones
-            candidatas. Nunca modifica el catálogo automáticamente.
-
-            Este PR debe revisarse antes de fusionarse.
+          body-path: ${{ runner.temp }}/catalogue-pr.md
           labels: data,automated
