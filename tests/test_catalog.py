@@ -141,6 +141,7 @@ class CatalogueTest(unittest.TestCase):
                 "Naturaleza": "Público",
                 "TipoCentro": "Docente",
                 "CentroProfesoresCodigo": "35700471",
+                "EOEP": "35702370 - E.O.E.P. GRAN CANARIA NOROESTE",
             },
             {
                 "Codigo": "38002065",
@@ -177,6 +178,8 @@ class CatalogueTest(unittest.TestCase):
             by_code = {row["code"]: row for row in catalogue}
             self.assertEqual("35700471", by_code["35000011"]["cep"])
             self.assertEqual("", by_code["38002065"]["cep"])
+            self.assertEqual("35702370", by_code["35000011"]["eoep"])
+            self.assertEqual("", by_code["38002065"]["eoep"])
             with csv_path.open(encoding="utf-8", newline="") as handle:
                 exported = list(csv.DictReader(handle))
             self.assertEqual(["35000011"], [row["Codigo"] for row in exported])

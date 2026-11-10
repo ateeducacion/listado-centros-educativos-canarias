@@ -40,6 +40,12 @@ def clean(value: Any) -> str:
     return "" if value is None else str(value).strip()
 
 
+def eoep_code(row: dict[str, str]) -> str:
+    """Return the code of the centre's EOEP, taken from «code - name»."""
+    code = clean(row.get("EOEP")).split(" - ", 1)[0].strip()
+    return code if len(code) == 8 and code.isdigit() else ""
+
+
 def is_active(row: dict[str, str]) -> bool:
     """Return whether a canonical centre is active."""
     return clean(row.get("Activo", "1")).casefold() not in {"0", "false", "no"}
@@ -111,6 +117,7 @@ def build_min_json(rows: list[dict[str, str]], destination: Path) -> int:
             "municipality": clean(row.get("Municipio")),
             "type": clean(row.get("DesEtapaCentro")),
             "cep": clean(row.get("CentroProfesoresCodigo")),
+            "eoep": eoep_code(row),
             "active": is_active(row),
         }
         for row in rows
