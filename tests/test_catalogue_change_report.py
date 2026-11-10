@@ -32,12 +32,32 @@ class CatalogueChangeReportTest(unittest.TestCase):
         """Show changes by centre code, not row order."""
         old_columns = ["Codigo", "Denominacion", "Isla", "Telefono"]
         old = {
-            "35000011": {"Codigo": "35000011", "Denominacion": "School A", "Isla": "TENERIFE", "Telefono": "111"},
-            "35000012": {"Codigo": "35000012", "Denominacion": "School B", "Isla": "LA PALMA", "Telefono": "222"},
+            "35000011": {
+                "Codigo": "35000011",
+                "Denominacion": "School A",
+                "Isla": "TENERIFE",
+                "Telefono": "111",
+            },
+            "35000012": {
+                "Codigo": "35000012",
+                "Denominacion": "School B",
+                "Isla": "LA PALMA",
+                "Telefono": "222",
+            },
         }
         new = {
-            "35000011": {"Codigo": "35000011", "Denominacion": "School A", "Isla": "TENERIFE", "Telefono": "333"},
-            "35000013": {"Codigo": "35000013", "Denominacion": "School C", "Isla": "EL HIERRO", "Telefono": "444"},
+            "35000011": {
+                "Codigo": "35000011",
+                "Denominacion": "School A",
+                "Isla": "TENERIFE",
+                "Telefono": "333",
+            },
+            "35000013": {
+                "Codigo": "35000013",
+                "Denominacion": "School C",
+                "Isla": "EL HIERRO",
+                "Telefono": "444",
+            },
         }
         md = reporter.make_report(old_columns, old, old_columns, new)
         self.assertIn("| Added centres | 1 |", md)
@@ -62,7 +82,13 @@ class CatalogueChangeReportTest(unittest.TestCase):
         """Warn when a source column containing data disappears."""
         old_columns = ["Codigo", "Denominacion", "CentroAdscritoEOI"]
         new_columns = ["Codigo", "Denominacion"]
-        old = {"00000001": {"Codigo": "00000001", "Denominacion": "School", "CentroAdscritoEOI": "38000000"}}
+        old = {
+            "00000001": {
+                "Codigo": "00000001",
+                "Denominacion": "School",
+                "CentroAdscritoEOI": "38000000",
+            }
+        }
         new = {"00000001": {"Codigo": "00000001", "Denominacion": "School"}}
         md = reporter.make_report(old_columns, old, new_columns, new)
         self.assertIn("**Warning: columns removed", md)
@@ -74,7 +100,10 @@ class CatalogueChangeReportTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             path = self.make_csv(
                 Path(directory), "duplicate.csv", ["Codigo", "Denominacion"],
-                [{"Codigo": "00000001", "Denominacion": "A"}, {"Codigo": "00000001", "Denominacion": "B"}],
+                [
+                    {"Codigo": "00000001", "Denominacion": "A"},
+                    {"Codigo": "00000001", "Denominacion": "B"},
+                ],
             )
             with self.assertRaisesRegex(ValueError, "duplicate code"):
                 reporter.load_catalogue(path)
