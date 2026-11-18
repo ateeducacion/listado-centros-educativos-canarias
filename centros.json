@@ -3627,7 +3627,7 @@
   },
   {
     "Codigo": "35001475",
-    "Denominacion": "CEE ROMÁN PÉREZ DÉNIZ",
+    "Denominacion": "CEE GUINIGUADA",
     "DesEtapaCentro": "CEE",
     "DescripcionEtapaCentro": "Centro de Educación Especial",
     "Direccion": "C/ ÁLAMO, 34",
@@ -3666,7 +3666,7 @@
     "ZonaInspeccionNombre": "LP0 - Provincia Las Palmas",
     "FuenteCEP": "data/cep_assignments.csv",
     "FuenteZonaInspeccion": "Datos Abiertos de Canarias",
-    "CamposCorregidos": "Direccion",
+    "CamposCorregidos": "Denominacion,Direccion",
     "Activo": "1",
     "FechaAlta": "",
     "FechaBaja": "",
