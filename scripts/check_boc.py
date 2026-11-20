@@ -185,7 +185,7 @@ def verified_rename(
     # Other centre codes may occur in the background of the order or page.
     # Only the operative naming decision can identify the centre being renamed.
     decision = re.search(
-        r"\bresuelvo\s*:?\s*(?:primero\s*[.:\-]*\s*)?"
+        r"\bresuelvo\s*:?\s*(?:primero[\s.:\-]*)?"
         r"(autorizar como denominacion especifica.*?)"
         r"(?=\bsegundo\s*[.:\-]|\bcontra el presente acto\b|$)",
         canonical(publication),
