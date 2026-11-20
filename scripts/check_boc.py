@@ -180,7 +180,7 @@ def verified_rename(
         return False
 
     def canonical(value: str) -> str:
-        return normalized(value).translate(str.maketrans("–—‑“”«»", '---""""'))
+        return normalized(value).translate(str.maketrans("\u2013—\u2011“”«»", '---""""'))
 
     # Other centre codes may occur in the background of the order or page.
     # Only the operative naming decision can identify the centre being renamed.

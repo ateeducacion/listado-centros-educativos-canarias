@@ -444,7 +444,7 @@ class CatalogueTest(unittest.TestCase):
             ["35016016", "35016017"], check
         ))
         self.assertTrue(check_boc.verified_rename(
-            title, decision.replace("Primero.-", "Primero. –")
+            title, decision.replace("Primero.-", "Primero. \u2013")
             .replace("“", '"').replace("”", '"'),
             ["35016016"], check
         ))
