@@ -451,6 +451,15 @@ class CatalogueTest(unittest.TestCase):
         self.assertFalse(check_boc.verified_rename(
             title, decision.replace("RESUELVO:", ""), ["35016016"], check
         ))
+        self.assertTrue(check_boc.verified_rename(
+            title, title + " Centro con código 35016016.", ["35016016"], check
+        ))
+        self.assertFalse(check_boc.verified_rename(
+            title, title + " Centro con código 35016016.", ["35016016", "35016017"], check
+        ))
+        self.assertFalse(check_boc.verified_rename(
+            title, "Centro con código 35016016.", ["35016016"], check
+        ))
         self.assertFalse(check_boc.verified_rename(
             title, decision, ["35016016"], dict(check, directory_name="CIFP OTRO")
         ))

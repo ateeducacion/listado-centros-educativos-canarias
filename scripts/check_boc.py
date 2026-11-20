@@ -182,26 +182,37 @@ def verified_rename(
     def canonical(value: str) -> str:
         return normalized(value).translate(str.maketrans("\u2013—\u2011“”«»", '---""""'))
 
-    # Other centre codes may occur in the background of the order or page.
-    # Only the operative naming decision can identify the centre being renamed.
+    title_name = re.search(r'"([^"]+)"\s*\.?$', canonical(title))
+    if not title_name:
+        return False
+    name = title_name.group(1).strip()
+    prefix = canonical(check["catalogue_name"]).split(" ", 1)[0]
+    if not prefix or canonical(check["directory_name"]) != f"{prefix} {name}":
+        return False
+
+    document = canonical(publication)
+    # Prefer the operative decision whenever it is available.
     decision = re.search(
         r"\bresuelvo\s*:?\s*(?:primero[\s.:\-]*)?"
         r"(autorizar como denominacion especifica.*?)"
         r"(?=\bsegundo\s*[.:\-]|\bcontra el presente acto\b|$)",
-        canonical(publication),
+        document,
     )
-    if not decision:
-        return False
-    clause = decision.group(1)
-    if extract_codes(clause) != [check["code"]]:
-        return False
-    name = re.search(r'\bla de\b[^"]{0,200}"([^"]+)"', clause)
-    title_name = re.search(r'"([^"]+)"\s*\.?$', canonical(title))
-    if not name or not title_name or name.group(1) != title_name.group(1):
-        return False
-    prefix = canonical(check["catalogue_name"]).split(" ", 1)[0]
-    directory_name = canonical(check["directory_name"])
-    return bool(prefix) and directory_name == f"{prefix} {name.group(1).strip()}"
+    if decision:
+        clause = decision.group(1)
+        operative_name = re.search(r'\bla de\b[^"]{0,200}"([^"]+)"', clause)
+        return (
+            extract_codes(clause) == [check["code"]]
+            and operative_name is not None
+            and operative_name.group(1).strip() == name
+        )
+
+    # The published HTML may expose only the heading and abbreviated text.
+    # Require the full explicit order title in that page, exactly one centre
+    # code, and agreement with the operational directory. Never infer a rename
+    # from the feed title alone or a document with multiple centre codes.
+    heading = canonical(title).rstrip(".")
+    return codes == [check["code"]] and heading in document
 
 
 def propose_renames(candidates: list[dict[str, Any]], path: Path) -> int:
