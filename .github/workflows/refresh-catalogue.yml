@@ -47,15 +47,21 @@ jobs:
       - name: Generate catalogue
         run: python scripts/update_data.py
 
+      - name: Propose verified BOC naming corrections
+        run: python scripts/check_boc.py --propose-renames
+        continue-on-error: true
+
+      - name: Regenerate catalogue if BOC overrides changed
+        run: |
+          if ! git diff --quiet -- data/centre_field_overrides.csv; then
+            python scripts/update_data.py
+          fi
+
       - name: Validate catalogue
         run: python scripts/validate_data.py
 
       - name: Generate consumer artefacts
         run: python scripts/export_consumers.py
-
-      - name: Check recent BOC changes
-        run: python scripts/check_boc.py
-        continue-on-error: true
 
       - name: Upload generated catalogue
         uses: actions/upload-artifact@v7
@@ -67,6 +73,7 @@ jobs:
             dist/boc-watch.json
             dist/boc-watch.md
             data/boc-pendiente.md
+            data/centre_field_overrides.csv
           if-no-files-found: error
           retention-days: 7
 
@@ -108,7 +115,7 @@ jobs:
         with:
           branch: automation/update-centres
           delete-branch: true
-          commit-message: "Actualizar catálogo de centros"
-          title: "Actualizar catálogo de centros"
+          commit-message: "Update centre catalogue"
+          title: "Update centre catalogue"
           body-path: ${{ runner.temp }}/catalogue-pr.md
           labels: data,automated
