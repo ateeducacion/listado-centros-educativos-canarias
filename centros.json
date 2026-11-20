@@ -31243,7 +31243,7 @@
   },
   {
     "Codigo": "35016016",
-    "Denominacion": "CIFP EN TELDE",
+    "Denominacion": "CIFP TELDE-PROFESOR ANTONIO CABRERA PÉREZ",
     "DesEtapaCentro": "CIFP",
     "DescripcionEtapaCentro": "Centro Integrado de Formación Profesional",
     "Direccion": "AVDA. LA PAZ, 3",
@@ -31282,7 +31282,7 @@
     "ZonaInspeccionNombre": "LP0 - Provincia Las Palmas",
     "FuenteCEP": "data/cep_assignments.csv",
     "FuenteZonaInspeccion": "Directorio operativo de centros educativos",
-    "CamposCorregidos": "FuenteZonaInspeccion,ZonaInspeccionCodigo,ZonaInspeccionNombre",
+    "CamposCorregidos": "Denominacion,FuenteZonaInspeccion,ZonaInspeccionCodigo,ZonaInspeccionNombre",
     "Activo": "1",
     "FechaAlta": "",
     "FechaBaja": "",
