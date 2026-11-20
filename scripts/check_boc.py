@@ -172,26 +172,36 @@ def verified_rename(
 ) -> bool:
     """Only propose explicit single-centre naming orders confirmed by the directory."""
     if (
-        codes != [check["code"]]
+        check["code"] not in codes
         or check["issues"] != ["name_differs_from_directory"]
         or not check["catalogue_active"]
         or "autoriza como denominacion especifica" not in normalized(title)
     ):
         return False
-    # Require the operative decision, not a quoted proposal in the background.
+
+    def canonical(value: str) -> str:
+        return normalized(value).translate(str.maketrans("\u2013—\u2011“”«»", '---""""'))
+
+    # Other centre codes may occur in the background of the order or page.
+    # Only the operative naming decision can identify the centre being renamed.
     decision = re.search(
-        r"\bresuelvo\s*:\s*(?:primero[.\-]*\s*)?"
-        r"autorizar como denominacion especifica[^“”«»]{1,500}"
-        r"\bcodigo\s+" + re.escape(check["code"]) +
-        r"\b[^“”«»]{0,200}\bla de\b[^“”«»]{0,150}[“«]([^”»]+)[”»]",
-        normalized(publication),
+        r"\bresuelvo\s*:?\s*(?:primero[\s.:\-]*)?"
+        r"(autorizar como denominacion especifica.*?)"
+        r"(?=\bsegundo\s*[.:\-]|\bcontra el presente acto\b|$)",
+        canonical(publication),
     )
     if not decision:
         return False
-    prefix = normalized(check["catalogue_name"]).split(" ", 1)[0]
-    directory_name = normalized(check["directory_name"])
-    # The catalogue uses an abbreviated centre type followed by the specific name.
-    return bool(prefix) and directory_name == f"{prefix} {decision.group(1).strip()}"
+    clause = decision.group(1)
+    if extract_codes(clause) != [check["code"]]:
+        return False
+    name = re.search(r'\bla de\b[^"]{0,200}"([^"]+)"', clause)
+    title_name = re.search(r'"([^"]+)"\s*\.?$', canonical(title))
+    if not name or not title_name or name.group(1) != title_name.group(1):
+        return False
+    prefix = canonical(check["catalogue_name"]).split(" ", 1)[0]
+    directory_name = canonical(check["directory_name"])
+    return bool(prefix) and directory_name == f"{prefix} {name.group(1).strip()}"
 
 
 def propose_renames(candidates: list[dict[str, Any]], path: Path) -> int:

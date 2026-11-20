@@ -418,7 +418,10 @@ class CatalogueTest(unittest.TestCase):
         self.assertIn("name_differs_from_directory", issues)
 
     def test_boc_verified_rename_requires_operational_decision(self) -> None:
-        title = "ORDEN por la que se autoriza como denominación específica del centro"
+        title = (
+            "ORDEN por la que se autoriza como denominación específica del centro "
+            "“Telde-Profesor Antonio Cabrera Pérez”."
+        )
         check = {
             "code": "35016016",
             "catalogue_active": True,
@@ -432,8 +435,18 @@ class CatalogueTest(unittest.TestCase):
             "Centro Integrado de Formación Profesional “Telde-Profesor Antonio Cabrera Pérez”."
         )
         self.assertTrue(check_boc.verified_rename(title, decision, ["35016016"], check))
+        self.assertTrue(check_boc.verified_rename(
+            title, "Antecedentes: código 35016017. " + decision,
+            ["35016017", "35016016"], check
+        ))
         self.assertFalse(check_boc.verified_rename(
-            title, decision, ["35016016", "35016017"], check
+            title, decision.replace("35016016", "35016016 y 35016017"),
+            ["35016016", "35016017"], check
+        ))
+        self.assertTrue(check_boc.verified_rename(
+            title, decision.replace("Primero.-", "Primero. \u2013")
+            .replace("“", '"').replace("”", '"'),
+            ["35016016"], check
         ))
         self.assertFalse(check_boc.verified_rename(
             title, decision.replace("RESUELVO:", ""), ["35016016"], check
