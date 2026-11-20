@@ -60,7 +60,7 @@ La generación consulta, como mínimo, los siguientes conjuntos de datos:
 4. Correcciones revisadas y versionadas cuando el BOC o el directorio oficial de centros se adelantan a la publicación de OpenData: de vigencia en `data/centre_overrides.csv` y de campos concretos en `data/centre_field_overrides.csv`.
 5. **Directorio operativo de centros educativos**, el buscador público de la Consejería. Se usa para detectar diferencias respecto al catálogo versionado y para incorporar los centros que todavía no publica OpenData.
 
-El BOC se usa como **detector de posibles cambios**, no como una fuente que modifique el catálogo de forma automática. El workflow genera un informe y cualquier corrección se incorpora de forma explícita con su procedencia. La dirección de cada anuncio se construye a partir del identificador `BOC-A-…` del feed, porque el enlace que publica el RSS ya no se sirve; las publicaciones que no puedan leerse se cuentan en el informe en lugar de interrumpirlo.
+El BOC se usa como detector de cambios. El workflow propone correcciones de denominación cuando una orden autoriza expresamente el nuevo nombre de un único centro y este coincide con el directorio operativo. Las correcciones se guardan con su procedencia en `data/centre_field_overrides.csv`, se regenera el catálogo y se incluye todo en el mismo PR para revisión. Las altas, bajas, discrepancias ambiguas y correcciones que ya tengan un override quedan pendientes de revisión manual. Sin `--propose-renames`, la vigilancia solo informa. La dirección de cada anuncio se construye a partir del identificador `BOC-A-…` del feed, porque el enlace que publica el RSS ya no se sirve; las publicaciones que no puedan leerse se cuentan en el informe en lugar de interrumpirlo.
 
 El buscador responde a una consulta sin filtros con el listado completo del directorio. Con dos peticiones se obtiene el censo operativo entero —denominación, municipio, dirección, teléfono, correo, coordenadas y etapa— y la ficha por código añade el resto de campos publicados:
 
@@ -106,7 +106,7 @@ El proceso realiza estas operaciones:
 8. genera `centros.csv` y `centros.json`;
 9. valida códigos, duplicados, sustituciones, relaciones y estructura;
 10. genera contratos reducidos para otros aplicativos;
-11. comprueba publicaciones recientes del BOC y genera un informe de posibles desfases.
+11. comprueba publicaciones recientes del BOC; el workflow propone cambios de nombre verificados y regenera el catálogo antes de validar y abrir el PR.
 
 La comparación exhaustiva con el directorio operativo se mantiene como una herramienta manual mediante `scripts/directory_diff.py`. No forma parte del CI ni de los workflows programados.
 

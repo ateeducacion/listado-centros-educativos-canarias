@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import argparse
 import csv
 import html
 import json
@@ -22,6 +23,7 @@ from directory_diff import directory_index
 
 ROOT = Path(__file__).resolve().parents[1]
 DATASET = ROOT / "centros.csv"
+FIELD_OVERRIDES = ROOT / "data" / "centre_field_overrides.csv"
 OUTPUT_DIR = ROOT / "dist"
 OUTPUT_JSON = OUTPUT_DIR / "boc-watch.json"
 OUTPUT_MD = OUTPUT_DIR / "boc-watch.md"
@@ -165,11 +167,88 @@ def compare_directory(
     return issues
 
 
+def verified_rename(
+    title: str, publication: str, codes: list[str], check: dict[str, Any]
+) -> bool:
+    """Only propose explicit single-centre naming orders confirmed by the directory."""
+    if (
+        codes != [check["code"]]
+        or check["issues"] != ["name_differs_from_directory"]
+        or not check["catalogue_active"]
+        or "autoriza como denominacion especifica" not in normalized(title)
+    ):
+        return False
+    # Require the operative decision, not a quoted proposal in the background.
+    decision = re.search(
+        r"\bresuelvo\s*:\s*(?:primero[.\-]*\s*)?"
+        r"autorizar como denominacion especifica[^“”«»]{1,500}"
+        r"\bcodigo\s+" + re.escape(check["code"]) +
+        r"\b[^“”«»]{0,200}\bla de\b[^“”«»]{0,150}[“«]([^”»]+)[”»]",
+        normalized(publication),
+    )
+    if not decision:
+        return False
+    prefix = normalized(check["catalogue_name"]).split(" ", 1)[0]
+    directory_name = normalized(check["directory_name"])
+    # The catalogue uses an abbreviated centre type followed by the specific name.
+    return bool(prefix) and directory_name == f"{prefix} {decision.group(1).strip()}"
+
+
+def propose_renames(candidates: list[dict[str, Any]], path: Path) -> int:
+    """Write only new, unambiguous corrections; never overwrite a reviewed override."""
+    with path.open(encoding="utf-8-sig", newline="") as handle:
+        reader = csv.DictReader(handle)
+        fields = reader.fieldnames
+        rows = list(reader)
+    if fields != ["Codigo", "Campo", "Valor", "Fuente", "FuenteURL"]:
+        raise ValueError("Unexpected field override schema")
+    existing = {(row["Codigo"], row["Campo"]) for row in rows}
+    proposals: dict[str, list[tuple[dict[str, Any], dict[str, Any]]]] = {}
+    for candidate in candidates:
+        url = candidate["url"]
+        if not re.fullmatch(
+            r"https://www\.gobiernodecanarias\.org/boc/\d{4}/\d+/\d+\.html", url
+        ):
+            continue
+        for check in candidate["checks"]:
+            if check.get("verified_rename"):
+                proposals.setdefault(check["code"], []).append((candidate, check))
+
+    added = 0
+    for code, matches in sorted(proposals.items()):
+        if (code, "Denominacion") in existing or len(matches) != 1:
+            continue
+        candidate, check = matches[0]
+        rows.append(
+            {
+                "Codigo": code,
+                "Campo": "Denominacion",
+                "Valor": check["directory_name"],
+                "Fuente": candidate["title"],
+                "FuenteURL": candidate["url"],
+            }
+        )
+        check["proposed_rename"] = True
+        added += 1
+
+    if added:
+        temporary = path.with_suffix(".tmp")
+        with temporary.open("w", encoding="utf-8", newline="") as handle:
+            writer = csv.DictWriter(handle, fieldnames=fields)
+            writer.writeheader()
+            writer.writerows(sorted(rows, key=lambda row: (row["Codigo"], row["Campo"])))
+        temporary.replace(path)
+    return added
+
+
 def pending_report(candidates: list[dict[str, Any]]) -> str:
     """List only the BOC checks with discrepancies; empty when none remain."""
     lines: list[str] = []
     for candidate in candidates:
-        checks = [check for check in candidate["checks"] if check["issues"]]
+        checks = [
+            check for check in candidate["checks"]
+            if check["issues"] and not check.get("proposed_rename")
+        ]
         if not checks:
             continue
         lines.extend([f"## {candidate['title']}", "", candidate["url"], ""])
@@ -194,7 +273,10 @@ def pending_report(candidates: list[dict[str, Any]]) -> str:
 
 
 def main() -> None:
-    """Check recent BOC entries and write a review report without changing data."""
+    """Check recent BOC entries and optionally stage verified naming corrections."""
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--propose-renames", action="store_true")
+    args = parser.parse_args()
     catalog = load_catalog()
     directory = directory_index()
     session = requests.Session()
@@ -248,6 +330,11 @@ def main() -> None:
                 }
             )
 
+        for check in checks:
+            check["verified_rename"] = bool(url) and verified_rename(
+                item["title"], publication_text, codes, check
+            )
+
         candidates.append(
             {
                 "title": item["title"],
@@ -258,11 +345,14 @@ def main() -> None:
             }
         )
 
+    proposed_count = propose_renames(candidates, FIELD_OVERRIDES) if args.propose_renames else 0
+    attention_count -= proposed_count
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     payload = {
         "rss_url": RSS_URL,
         "candidate_count": len(candidates),
         "attention_count": attention_count,
+        "proposed_rename_count": proposed_count,
         "unreadable_count": len(unreadable),
         "unreadable": unreadable,
         "candidates": candidates,
@@ -276,7 +366,8 @@ def main() -> None:
         "# Vigilancia de cambios de centros en el BOC",
         "",
         f"- Publicaciones candidatas: {len(candidates)}",
-        f"- Comprobaciones que requieren revisión: {attention_count}",
+        f"- Comprobaciones que requieren revisión manual: {attention_count}",
+        f"- Cambios de denominación propuestos: {proposed_count}",
         f"- Publicaciones no legibles: {len(unreadable)}",
         "",
     ]
@@ -284,6 +375,8 @@ def main() -> None:
         lines.extend([f"## {candidate['title']}", "", candidate["url"], ""])
         for check in candidate["checks"]:
             issues = ", ".join(check["issues"]) or "sin discrepancias"
+            if check.get("proposed_rename"):
+                issues = "corrección propuesta en centre_field_overrides.csv"
             lines.append(
                 f"- `{check['code']}`: {issues}; "
                 f"catálogo=`{check['catalogue_name']}`; "

@@ -417,6 +417,51 @@ class CatalogueTest(unittest.TestCase):
         )
         self.assertIn("name_differs_from_directory", issues)
 
+    def test_boc_verified_rename_requires_operational_decision(self) -> None:
+        title = "ORDEN por la que se autoriza como denominación específica del centro"
+        check = {
+            "code": "35016016",
+            "catalogue_active": True,
+            "catalogue_name": "CIFP EN TELDE",
+            "directory_name": "CIFP TELDE-PROFESOR ANTONIO CABRERA PÉREZ",
+            "issues": ["name_differs_from_directory"],
+        }
+        decision = (
+            "RESUELVO:\nPrimero.- Autorizar como denominación específica del Centro "
+            "Integrado de Formación Profesional en Telde, código 35016016, la de "
+            "Centro Integrado de Formación Profesional “Telde-Profesor Antonio Cabrera Pérez”."
+        )
+        self.assertTrue(check_boc.verified_rename(title, decision, ["35016016"], check))
+        self.assertFalse(check_boc.verified_rename(
+            title, decision, ["35016016", "35016017"], check
+        ))
+        self.assertFalse(check_boc.verified_rename(
+            title, decision.replace("RESUELVO:", ""), ["35016016"], check
+        ))
+        self.assertFalse(check_boc.verified_rename(
+            title, decision, ["35016016"], dict(check, directory_name="CIFP OTRO")
+        ))
+
+    def test_boc_proposal_preserves_existing_overrides(self) -> None:
+        check = {"code": "35016016", "directory_name": "CIFP NUEVO", "verified_rename": True}
+        candidate = {
+            "title": "Order",
+            "url": "https://www.gobiernodecanarias.org/boc/2026/233/4040.html",
+            "checks": [check],
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "overrides.csv"
+            path.write_text("Codigo,Campo,Valor,Fuente,FuenteURL\n", encoding="utf-8")
+            self.assertEqual(1, check_boc.propose_renames([candidate], path))
+            with path.open(encoding="utf-8", newline="") as handle:
+                rows = list(csv.DictReader(handle))
+            self.assertEqual("CIFP NUEVO", rows[0]["Valor"])
+            self.assertEqual(candidate["url"], rows[0]["FuenteURL"])
+            check["directory_name"] = "CIFP OTRO"
+            self.assertEqual(0, check_boc.propose_renames([candidate], path))
+            with path.open(encoding="utf-8", newline="") as handle:
+                self.assertEqual(rows, list(csv.DictReader(handle)))
+
     def test_boc_pending_report_lists_only_discrepancies(self) -> None:
         def candidate(issues: list[str]) -> dict:
             return {

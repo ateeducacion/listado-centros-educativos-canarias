@@ -174,13 +174,14 @@ def make_report(
             "- `python scripts/update_data.py`",
             "- `python scripts/validate_data.py`",
             "- `python scripts/export_consumers.py`",
-            "- `python scripts/check_boc.py` (best-effort BOC watch only)",
+            "- `python scripts/check_boc.py --propose-renames` (best-effort BOC watch)",
             "",
             "Published files: `centros.csv` and `centros.json`. Consumer contracts "
             "are regenerated during GitHub Pages deployment.",
             "",
-            "BOC candidate checks never modify the catalogue automatically. "
-            "Review this pull request before merging.",
+            "Verified BOC name changes are proposed with source URLs in "
+            "`data/centre_field_overrides.csv`. Ambiguous changes remain pending. "
+            "Review this pull request before merging; nothing is published by the watch alone.",
             "",
         ]
     )
