@@ -52,3 +52,18 @@ directorio entero con solo esas 2 peticiones.
   valor de origen antes de consultar la tabla curada.
 - Los CSV curados se leen con `utf-8-sig` y alguno tiene CRLF; en la shell,
   pásalos por `tr -d '\r'` antes de iterar sobre sus valores.
+
+## Cambios de denominación
+
+- Un cambio de nombre lleva **dos** filas: la de `data/centre_name_history.csv`
+  (`Codigo,DenominacionAnterior,DenominacionNueva,Fecha,Fuente,FuenteURL,Nota`),
+  que alimenta la columna `DenominacionesAnteriores`, y, mientras OpenData siga
+  publicando el nombre viejo, la corrección de `Denominacion` en
+  `data/centre_field_overrides.csv`. `check_boc.py --propose-renames` solo
+  escribe la segunda: la fila del historial hay que añadirla a mano.
+- Solo se registran cambios del nombre propio, no del tipo de centro. Los
+  criterios completos están en el README («Denominaciones anteriores»).
+- No te fíes del código que cita una orden del BOC sin contrastar nombre y
+  municipio con el catálogo: hay órdenes con el prefijo 35/38 cambiado o un
+  dígito mal, corregidas después por otra orden. Si el código o el nombre no
+  salen literalmente de la orden citada, explícalo en `Nota`.

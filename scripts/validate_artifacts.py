@@ -18,6 +18,7 @@ DATA_DIR = ROOT / "data"
 DIST_DIR = ROOT / "dist"
 
 CENTRE_CODE_RE = re.compile(r"^\d{8}$")
+NAME_SEPARATOR = " | "
 MIN_JSON_FIELDS = {
     "code",
     "name",
@@ -238,6 +239,40 @@ def validate_curated_materialization(
                 )
 
 
+def validate_name_history(catalogue_rows: list[dict[str, str]]) -> None:
+    """Ensure the previous names in the catalogue are the curated history."""
+    _, history_rows = read_csv(DATA_DIR / "centre_name_history.csv")
+    changes: dict[str, list[tuple[str, str]]] = {}
+    for row in history_rows:
+        code = clean(row.get("Codigo")).strip()
+        if code:
+            changes.setdefault(code, []).append(
+                (
+                    clean(row.get("Fecha")).strip(),
+                    clean(row.get("DenominacionAnterior")).strip(),
+                )
+            )
+
+    catalogue = {
+        row["Codigo"]: row
+        for row in catalogue_rows
+        if row.get("Codigo")
+    }
+    for code in changes:
+        if code not in catalogue:
+            fail(f"Name history is missing from committed catalogue: {code}")
+    for code, row in catalogue.items():
+        expected = NAME_SEPARATOR.join(
+            name for _, name in sorted(changes.get(code, []), reverse=True)
+        )
+        actual = clean(row.get("DenominacionesAnteriores"))
+        if actual != expected:
+            fail(
+                f"Name history for {code} did not reach the catalogue: "
+                f"DenominacionesAnteriores is {actual!r}, expected {expected!r}"
+            )
+
+
 def validate_min_json(
     payload: Any,
     catalogue_rows: list[dict[str, str]],
@@ -385,6 +420,7 @@ def main() -> None:
     validate_source_csv_files()
     _, catalogue_rows = validate_catalogue_pair()
     validate_curated_materialization(catalogue_rows)
+    validate_name_history(catalogue_rows)
     print(
         "Validated committed artefacts: "
         f"{len(catalogue_rows)} records and "

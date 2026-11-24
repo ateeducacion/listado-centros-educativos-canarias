@@ -25,6 +25,20 @@ export_consumers = load_script("export_consumers")
 check_boc = load_script("check_boc")
 directory_diff = load_script("directory_diff")
 update_data = load_script("update_data")
+validate_artifacts = load_script("validate_artifacts")
+validate_data = load_script("validate_data")
+
+
+def name_change(code: str, previous: str, new: str, date: str) -> dict[str, str]:
+    return {
+        "Codigo": code,
+        "DenominacionAnterior": previous,
+        "DenominacionNueva": new,
+        "Fecha": date,
+        "Fuente": "Orden de prueba",
+        "FuenteURL": "https://example.invalid/boc",
+        "Nota": "",
+    }
 
 
 class CatalogueTest(unittest.TestCase):
@@ -73,6 +87,141 @@ class CatalogueTest(unittest.TestCase):
 
         with self.assertRaises(RuntimeError):
             update_data.load_field_overrides(["Codigo"])
+
+    def test_previous_names_are_listed_newest_first(self) -> None:
+        previous = update_data.previous_names(
+            [
+                name_change(
+                    "35001475", "CEE SALVADOR RUEDA", "CEE ROMÁN PÉREZ DÉNIZ", "2021-04-12"
+                ),
+                name_change(
+                    "35001050", "CEIP ANDALUCÍA", "CEIP JOSÉ DEL ROSARIO UMPIÉRREZ", "2002-09-27"
+                ),
+                name_change(
+                    "35001475", "CEE ROMÁN PÉREZ DÉNIZ", "CEE GUINIGUADA", "2026-10-22"
+                ),
+            ]
+        )
+        self.assertEqual(
+            ["CEE ROMÁN PÉREZ DÉNIZ", "CEE SALVADOR RUEDA"], previous["35001475"]
+        )
+        self.assertEqual(["CEIP ANDALUCÍA"], previous["35001050"])
+
+    def test_previous_names_keep_a_name_the_centre_later_recovered(self) -> None:
+        previous = update_data.previous_names(
+            [
+                name_change(
+                    "35008718", "CEIP BATERÍA DE SAN JUAN", "CEIP ALCORAC HENRÍQUEZ", "2014-09-08"
+                ),
+                name_change(
+                    "35008718", "CEIP ALCORAC HENRÍQUEZ", "CEIP BATERÍA DE SAN JUAN", "2025-06-09"
+                ),
+            ]
+        )
+        self.assertEqual(
+            ["CEIP ALCORAC HENRÍQUEZ", "CEIP BATERÍA DE SAN JUAN"], previous["35008718"]
+        )
+
+    def test_name_history_fills_the_previous_names_column(self) -> None:
+        previous = {"35001475": ["CEE ROMÁN PÉREZ DÉNIZ", "CEE SALVADOR RUEDA"]}
+        item = update_data.apply_name_history(
+            {"Codigo": "35001475", "Denominacion": "CEE GUINIGUADA"}, previous
+        )
+        self.assertEqual(
+            "CEE ROMÁN PÉREZ DÉNIZ | CEE SALVADOR RUEDA", item["DenominacionesAnteriores"]
+        )
+        self.assertEqual("CEE GUINIGUADA", item["Denominacion"])
+
+        untouched = update_data.apply_name_history({"Codigo": "35000011"}, previous)
+        self.assertEqual("", untouched["DenominacionesAnteriores"])
+
+    def test_name_history_rejects_rows_without_code_date_names_or_source(self) -> None:
+        valid = name_change("35001475", "CEE ROMÁN PÉREZ DÉNIZ", "CEE GUINIGUADA", "2026-10-22")
+        self.assertTrue(update_data.previous_names([valid]))
+        for field, value in (
+            ("Codigo", "3500147"),
+            ("Fecha", ""),
+            ("Fecha", "22/10/2026"),
+            ("DenominacionAnterior", ""),
+            ("DenominacionNueva", ""),
+            ("Fuente", ""),
+            ("FuenteURL", ""),
+        ):
+            with self.subTest(field=field, value=value), self.assertRaises(RuntimeError):
+                update_data.previous_names([dict(valid, **{field: value})])
+
+    def test_name_history_rejects_a_name_containing_the_separator(self) -> None:
+        with self.assertRaises(RuntimeError):
+            update_data.previous_names(
+                [name_change("35001475", "CEE A | CEE B", "CEE GUINIGUADA", "2026-10-22")]
+            )
+
+    def test_name_history_rejects_a_change_that_keeps_the_name(self) -> None:
+        with self.assertRaises(RuntimeError):
+            update_data.previous_names(
+                [name_change("35001475", "CEE GUINIGUADA", "CEE GUINIGUADA", "2026-10-22")]
+            )
+
+    def test_name_history_rejects_two_changes_of_a_centre_on_one_date(self) -> None:
+        with self.assertRaises(RuntimeError):
+            update_data.previous_names(
+                [
+                    name_change("35001475", "CEE A", "CEE B", "2026-10-22"),
+                    name_change("35001475", "CEE B", "CEE C", "2026-10-22"),
+                ]
+            )
+
+    def test_name_history_file_reaches_the_catalogue(self) -> None:
+        previous = update_data.previous_names(
+            update_data.read_local_csv(update_data.NAME_HISTORY)
+        )
+        with (ROOT / "centros.csv").open(encoding="utf-8-sig", newline="") as handle:
+            catalogue = {row["Codigo"]: row for row in csv.DictReader(handle)}
+
+        self.assertEqual(set(), set(previous) - set(catalogue))
+        for code, row in catalogue.items():
+            self.assertEqual(
+                " | ".join(previous.get(code, [])),
+                row["DenominacionesAnteriores"],
+                f"Previous names of {code}",
+            )
+        self.assertEqual(
+            "CEE ROMÁN PÉREZ DÉNIZ | CEE SALVADOR RUEDA",
+            catalogue["35001475"]["DenominacionesAnteriores"],
+        )
+
+    def test_dataset_validation_requires_the_previous_names_column(self) -> None:
+        self.assertIn("DenominacionesAnteriores", validate_data.REQUIRED_COLUMNS)
+
+    def test_artifact_validation_compares_previous_names_with_the_history(self) -> None:
+        named = {
+            "Codigo": "35001475",
+            "DenominacionesAnteriores": "CEE ROMÁN PÉREZ DÉNIZ | CEE SALVADOR RUEDA",
+        }
+        unnamed = {"Codigo": "35000011", "DenominacionesAnteriores": ""}
+        with tempfile.TemporaryDirectory() as temp:
+            data = Path(temp)
+            (data / "centre_name_history.csv").write_text(
+                "Codigo,DenominacionAnterior,DenominacionNueva,Fecha,Fuente,FuenteURL,Nota\n"
+                "35001475,CEE ROMÁN PÉREZ DÉNIZ,CEE GUINIGUADA,2026-10-22,Orden,"
+                "https://example.invalid/2,\n"
+                "35001475,CEE SALVADOR RUEDA,CEE ROMÁN PÉREZ DÉNIZ,2021-04-12,Orden,"
+                "https://example.invalid/1,\n",
+                encoding="utf-8",
+            )
+            with unittest.mock.patch.object(validate_artifacts, "DATA_DIR", data):
+                validate_artifacts.validate_name_history([named, unnamed])
+
+                stale = dict(named, DenominacionesAnteriores="CEE SALVADOR RUEDA")
+                with self.subTest("stale column"), self.assertRaises(SystemExit):
+                    validate_artifacts.validate_name_history([stale, unnamed])
+
+                invented = dict(unnamed, DenominacionesAnteriores="CEIP INVENTADO")
+                with self.subTest("names without history"), self.assertRaises(SystemExit):
+                    validate_artifacts.validate_name_history([named, invented])
+
+                with self.subTest("centre missing"), self.assertRaises(SystemExit):
+                    validate_artifacts.validate_name_history([unnamed])
 
     def test_merge_rows_prefers_official_source(self) -> None:
         merged = update_data.merge_rows(

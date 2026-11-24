@@ -30,6 +30,7 @@ REQUIRED_COLUMNS = {
     "FuenteEstado",
     "FuenteEstadoURL",
     "CamposCorregidos",
+    "DenominacionesAnteriores",
 }
 
 MINIMUM_COUNTS = {
