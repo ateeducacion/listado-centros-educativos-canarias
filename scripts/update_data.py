@@ -8,6 +8,7 @@ import io
 import json
 import re
 import unicodedata
+from datetime import date
 from pathlib import Path
 from typing import Any
 
@@ -22,6 +23,8 @@ ADDITIONAL_CENTRES = ROOT / "data" / "additional_centres.csv"
 DIRECTORY_CENTRES = ROOT / "data" / "directory_centres.csv"
 CENTRE_OVERRIDES = ROOT / "data" / "centre_overrides.csv"
 FIELD_OVERRIDES = ROOT / "data" / "centre_field_overrides.csv"
+NAME_HISTORY = ROOT / "data" / "centre_name_history.csv"
+NAME_SEPARATOR = " | "
 OFFICIAL_SOURCE = "Datos Abiertos de Canarias"
 DIRECTORY_SOURCE = "Directorio operativo de centros educativos"
 
@@ -194,6 +197,56 @@ def apply_field_overrides(
     return item
 
 
+def previous_names(rows: list[dict[str, str]]) -> dict[str, list[str]]:
+    """Return the former names of each centre, newest first.
+
+    Each row records one reviewed change of the specific name, so a name the
+    centre later recovered is still listed where it belongs in the sequence.
+    """
+    changes: dict[str, dict[str, str]] = {}
+    for row in rows:
+        code = clean(row.get("Codigo"))
+        changed_on = clean(row.get("Fecha"))
+        previous = clean(row.get("DenominacionAnterior"))
+        new = clean(row.get("DenominacionNueva"))
+        if not re.fullmatch(r"\d{8}", code):
+            raise RuntimeError(f"Invalid name history code: {code!r}")
+        try:
+            date.fromisoformat(changed_on)
+        except ValueError as exc:
+            raise RuntimeError(
+                f"Invalid name history date for {code}: {changed_on!r}"
+            ) from exc
+        if not previous or not new:
+            raise RuntimeError(f"Name change {code} {changed_on} lacks a name")
+        if previous == new:
+            raise RuntimeError(f"Name change {code} {changed_on} keeps the name")
+        if NAME_SEPARATOR.strip() in previous + new:
+            raise RuntimeError(
+                f"Name change {code} {changed_on} contains the separator "
+                f"{NAME_SEPARATOR.strip()!r}"
+            )
+        if not clean(row.get("Fuente")) or not clean(row.get("FuenteURL")):
+            raise RuntimeError(f"Name change {code} {changed_on} has no provenance")
+        if changed_on in changes.get(code, {}):
+            raise RuntimeError(f"Duplicated name change: {code} {changed_on}")
+        changes.setdefault(code, {})[changed_on] = previous
+    return {
+        code: [by_date[day] for day in sorted(by_date, reverse=True)]
+        for code, by_date in changes.items()
+    }
+
+
+def apply_name_history(
+    item: dict[str, str],
+    previous: dict[str, list[str]],
+) -> dict[str, str]:
+    """Record the former names of a centre without touching its current one."""
+    names = previous.get(clean(item.get("Codigo")), [])
+    item["DenominacionesAnteriores"] = NAME_SEPARATOR.join(names)
+    return item
+
+
 def find_cep_assignment(
     row: dict[str, str],
     by_code: dict[str, dict[str, str]],
@@ -324,11 +377,13 @@ def main() -> None:
         "FuenteZonaInspeccion",
         *STATUS_FIELDS,
         "CamposCorregidos",
+        "DenominacionesAnteriores",
     ]
     fieldnames = source_fields + [
         field for field in added_fields if field not in source_fields
     ]
     field_overrides = load_field_overrides(fieldnames)
+    name_history = previous_names(read_local_csv(NAME_HISTORY))
 
     enriched: list[dict[str, str]] = []
     for row in centres:
@@ -373,6 +428,7 @@ def main() -> None:
             }
         )
         item = apply_field_overrides(item, field_overrides)
+        item = apply_name_history(item, name_history)
         enriched.append(apply_state(item, overrides))
 
     enriched.sort(key=lambda row: clean(row.get("Codigo")))

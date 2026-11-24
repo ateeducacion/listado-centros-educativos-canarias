@@ -47,6 +47,7 @@ Entre las columnas añadidas o normalizadas se encuentran:
 | `FuenteCentro` | Procedencia del registro base: `Datos Abiertos de Canarias`, `data/additional_centres.csv` o `Directorio operativo de centros educativos`. |
 | `CamposCorregidos` | Campos cuyo valor procede de una corrección revisada en `data/centre_field_overrides.csv` y no de la fuente original. |
 | `FuenteEstado` / `FuenteEstadoURL` | Fuente pública usada para una corrección de vigencia. |
+| `DenominacionesAnteriores` | Nombres que tuvo antes el centro, del más reciente al más antiguo y separados por ` \| `, según `data/centre_name_history.csv`. Vacía si no hay ningún cambio documentado. |
 
 No se publica el nombre de la persona inspectora. Solo se incorpora la identificación de la zona de inspección.
 
@@ -59,6 +60,7 @@ La generación consulta, como mínimo, los siguientes conjuntos de datos:
 3. Datos de apoyo mantenidos en este repositorio para completar las asignaciones de CEP que todavía no ofrece la fuente principal. Las webs públicas de los CEP se contrastan con el directorio oficial de Centros del Profesorado del Gobierno de Canarias.
 4. Correcciones revisadas y versionadas cuando el BOC o el directorio oficial de centros se adelantan a la publicación de OpenData: de vigencia en `data/centre_overrides.csv` y de campos concretos en `data/centre_field_overrides.csv`.
 5. **Directorio operativo de centros educativos**, el buscador público de la Consejería. Se usa para detectar diferencias respecto al catálogo versionado y para incorporar los centros que todavía no publica OpenData.
+6. **Órdenes de denominación publicadas en el BOC**, de las que procede el historial de nombres de `data/centre_name_history.csv`.
 
 El BOC se usa como detector de cambios. El workflow propone correcciones de denominación cuando una orden autoriza expresamente el nuevo nombre de un único centro y este coincide con el directorio operativo. Las correcciones se guardan con su procedencia en `data/centre_field_overrides.csv`, se regenera el catálogo y se incluye todo en el mismo PR para revisión. Las altas, bajas, discrepancias ambiguas y correcciones que ya tengan un override quedan pendientes de revisión manual. Sin `--propose-renames`, la vigilancia solo informa. La dirección de cada anuncio se construye a partir del identificador `BOC-A-…` del feed, porque el enlace que publica el RSS ya no se sirve; las publicaciones que no puedan leerse se cuentan en el informe en lugar de interrumpirlo.
 
@@ -103,10 +105,11 @@ El proceso realiza estas operaciones:
 5. conserva los datos de EOEP y CER disponibles;
 6. incorpora los servicios educativos y los centros del directorio operativo que deban formar parte del listado único;
 7. aplica únicamente correcciones revisadas y con fuente pública, de vigencia y de campos concretos;
-8. genera `centros.csv` y `centros.json`;
-9. valida códigos, duplicados, sustituciones, relaciones y estructura;
-10. genera contratos reducidos para otros aplicativos;
-11. comprueba publicaciones recientes del BOC; el workflow propone cambios de nombre verificados y regenera el catálogo antes de validar y abrir el PR.
+8. añade a cada centro sus denominaciones anteriores documentadas;
+9. genera `centros.csv` y `centros.json`;
+10. valida códigos, duplicados, sustituciones, relaciones y estructura;
+11. genera contratos reducidos para otros aplicativos;
+12. comprueba publicaciones recientes del BOC; el workflow propone cambios de nombre verificados y regenera el catálogo antes de validar y abrir el PR.
 
 La comparación exhaustiva con el directorio operativo se mantiene como una herramienta manual mediante `scripts/directory_diff.py`. No forma parte del CI ni de los workflows programados.
 
@@ -138,6 +141,33 @@ La columna `CamposCorregidos` enumera, en cada registro, los campos que proceden
 
 `scripts/apply_directory_fields.py` convierte en filas de este archivo las diferencias del último informe de `directory_diff.py`, pero solo para los campos que se le indiquen de forma explícita: ninguna diferencia se incorpora sola.
 
+## Denominaciones anteriores
+
+Los cambios de nombre de un centro se versionan en `data/centre_name_history.csv`, con una fila por cambio:
+
+```text
+Codigo,DenominacionAnterior,DenominacionNueva,Fecha,Fuente,FuenteURL,Nota
+```
+
+`Fecha` es la de la orden que autoriza el cambio. A partir de esta tabla, la columna `DenominacionesAnteriores` reúne los nombres que tuvo antes cada centro, del más reciente al más antiguo:
+
+```text
+35001475  CEE GUINIGUADA  →  CEE ROMÁN PÉREZ DÉNIZ | CEE SALVADOR RUEDA
+```
+
+Un nombre que el centro recuperó más tarde sigue apareciendo en su lugar de la secuencia. Cuando un centro cambia de código, el nombre antiguo no está aquí sino en el registro dado de baja, enlazado con `CodigoSustituidoPor`.
+
+Criterios de la tabla:
+
+- **Alcance.** Órdenes de la Consejería publicadas en el BOC entre 2002 y 2026 que conceden o cambian la denominación específica de un centro presente en el catálogo. Los cambios anteriores a 2002 todavía no están incorporados.
+- **Solo el nombre propio.** Un cambio que afecta únicamente al tipo de centro (por ejemplo, de CEO a CEIP) no genera fila. Cada denominación se escribe como en el catálogo: las siglas del tipo que tenía el centro según la orden y el nombre en mayúsculas.
+- **Centros sin denominación específica.** Cuando la orden concede su primer nombre a un centro, la denominación anterior es la provisional con la que figuraba: la del directorio de centros publicado en el BOC n.º 88, de 28.6.2002, si ya existía entonces, o `<SIGLAS> EN <lugar>`, que es la forma que usa el propio catálogo. No se registran los casos en que el nombre concedido coincide con la localidad con la que ya se identificaba el centro (de «CEO en Arona» a «CEO Arona»).
+- **Erratas del BOC.** Algunas órdenes citan mal el código del centro, o no lo citan, y otras se corrigen después. `Nota` explica cada caso en que el centro o el nombre no salen literalmente de la orden citada.
+
+La generación falla si una fila no tiene código, fecha, nombres o procedencia, si un nombre contiene el separador o si un centro tiene dos cambios con la misma fecha, y `validate_artifacts.py` comprueba que la columna del catálogo coincide con la tabla.
+
+Cuando el BOC publique un nuevo cambio de denominación hay que añadir su fila a esta tabla a mano. La corrección de `Denominacion` en `data/centre_field_overrides.csv`, necesaria mientras OpenData no publique el nombre nuevo, la propone el workflow cuando puede verificarla, pero esa propuesta no escribe el historial.
+
 ## Contratos para otros aplicativos
 
 GitHub Pages publica, además del conjunto completo:
@@ -164,6 +194,7 @@ La documentación de GitHub Pages explica las fuentes, el modelo de datos y el p
 - La consulta sin filtros del buscador lista todos los códigos publicados, de modo que los centros ausentes del catálogo se detectan sin necesidad de otra fuente. Aun así, depende de una aplicación ajena que puede cambiar sin aviso.
 - Los centros incorporados desde el directorio operativo no tienen zona de inspección en el conjunto oficial; solo se conserva la que publica su propia ficha, cuando existe.
 - La presencia o ausencia de una ficha en el directorio operativo no se considera una señal suficiente para activar o desactivar un centro.
+- `DenominacionesAnteriores` no es exhaustiva: solo recoge los cambios de nombre localizados en órdenes del BOC de 2002 a 2026. Que esté vacía no implica que el centro no haya tenido otro nombre.
 
 ## Cita
 
