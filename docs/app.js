@@ -15,7 +15,7 @@ const ISLANDS = [
 const ISLAND_NAMES = new Map(ISLANDS);
 const ICONS = {
   chevron: "M9 6l6 6-6 6",
-  back: "M15 6l-6 6 6 6",
+  back: "M19 12H5M11 6l-6 6 6 6",
   copy: "M9 9h11v11H9zM5 15H4V4h11v1",
   pin: "M12 21s-7-6.1-7-11.5a7 7 0 0 1 14 0C19 14.9 12 21 12 21zM12 7a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z",
   route: "M6 15.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM18 3.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM8.5 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.5",

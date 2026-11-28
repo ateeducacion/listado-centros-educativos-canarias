@@ -925,7 +925,12 @@ pre {
   align-items: center;
   gap: 6px;
   min-height: 44px;
-  font-weight: 500;
+  margin-bottom: -24px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.back:hover {
+  text-decoration: underline;
 }
 .detail-head {
   display: flex;
@@ -1082,4 +1087,7 @@ pre {
   min-width: 0;
   width: 100%;
   max-width: 480px;
+}
+.detail .back {
+  margin-bottom: -12px;
 }
