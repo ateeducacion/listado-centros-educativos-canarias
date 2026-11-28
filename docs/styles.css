@@ -169,7 +169,7 @@ pre {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  min-height: 40px;
+  min-height: 44px;
   padding: 0 14px;
   margin-left: 4px;
   font: inherit;
@@ -185,7 +185,7 @@ pre {
   border-color: var(--ink);
 }
 .site-nav .icon-btn {
-  width: 40px;
+  width: 44px;
   padding: 0;
   justify-content: center;
 }
@@ -256,7 +256,7 @@ pre {
   margin-top: 10px;
 }
 .chip {
-  min-height: 40px;
+  min-height: 44px;
   padding: 0 14px;
   font: inherit;
   font-size: 15px;
@@ -675,7 +675,7 @@ pre {
   color: var(--muted);
 }
 .inline-field select {
-  min-height: 40px;
+  min-height: 44px;
   max-width: 100%;
   padding: 0 10px;
   font: inherit;
@@ -725,7 +725,7 @@ pre {
   overflow: hidden;
 }
 .segmented button {
-  min-height: 40px;
+  min-height: 44px;
   padding: 0 16px;
   font: inherit;
   font-size: 15px;
