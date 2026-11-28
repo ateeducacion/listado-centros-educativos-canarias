@@ -1036,18 +1036,74 @@ pre {
   color: var(--muted);
 }
 .all-fields {
-  border-top: 1px solid var(--line);
-  padding-top: 16px;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  background: var(--surface);
 }
 .all-fields summary {
-  min-height: 44px;
   display: flex;
   align-items: center;
-  font-weight: 600;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 44px;
+  padding: 16px 20px;
+  list-style: none;
   cursor: pointer;
+  border-radius: 6px;
+}
+.all-fields summary::-webkit-details-marker {
+  display: none;
+}
+.all-fields summary:hover {
+  background: var(--soft);
+}
+.all-fields[open] summary {
+  border-bottom: 1px solid var(--line);
+  border-radius: 6px 6px 0 0;
+}
+.sum-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.sum-text strong {
+  color: var(--accent);
+  font-size: 17px;
+}
+.sum-text span {
+  font-size: 14px;
+  color: var(--muted);
+}
+.sum-icon {
+  flex: 0 0 auto;
+  display: flex;
+  color: var(--accent);
+  transition: transform 0.15s ease;
+}
+.all-fields[open] .sum-icon {
+  transform: rotate(180deg);
+}
+@media (prefers-reduced-motion: reduce) {
+  .sum-icon {
+    transition: none;
+  }
+}
+.badge-owner {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 1px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--line-strong);
+  color: var(--ink);
+  background: var(--surface);
+}
+.badge-owner.is-public {
+  color: var(--accent);
+  background: var(--accent-faint);
+  border-color: var(--accent-soft);
 }
 .all-fields .table-box {
-  margin-top: 12px;
+  margin: 16px 20px 20px;
 }
 .all-fields .fields {
   min-width: 560px;
@@ -1147,4 +1203,9 @@ pre {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+/* The title receives focus on navigation so screen readers announce it; it
+   is not a control, so it needs no visible ring. */
+#detail-title:focus {
+  outline: none;
 }
