@@ -35,7 +35,7 @@
         <span>Centros educativos de Canarias</span>
       </a>
       <nav class="site-nav" aria-label="Principal">
-        <a href="./#sobre">Sobre los datos</a>
+        <a href="como-funciona/">Cómo funciona</a>
         <a href="desarrolladores/">Para desarrolladores</a>
         <button type="button" id="theme-toggle" class="nav-btn icon-btn" aria-label="Cambiar entre modo claro y oscuro" title="Cambiar tema">
           <svg class="icon-sun" aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>
@@ -63,7 +63,7 @@
             <input id="search" type="search" autocomplete="off" placeholder="Por ejemplo: Pérez Galdós, 35002911 o Adeje">
             <button type="submit" class="btn btn-primary">Buscar</button>
           </div>
-          <p class="data-line"><span id="data-updated">Cargando datos…</span> · se comprueban cada día · <a href="#sobre">Sobre los datos</a></p>
+          <p class="data-line"><span id="data-updated">Cargando datos…</span> · se comprueban cada día · <a href="como-funciona/">Cómo funciona</a></p>
         </form>
 
         <div>
@@ -127,16 +127,6 @@
       </div>
     </section>
 
-    <section id="sobre" class="about" aria-labelledby="about-title">
-      <div class="wrap">
-        <h2 id="about-title">Sobre los datos</h2>
-        <div class="prose">
-          <p>Este listado reúne en un solo sitio todos los centros educativos de Canarias: colegios, institutos, centros de personas adultas, escuelas de idiomas y conservatorios, pero también los servicios que los apoyan, como los CEP, los EOEP y los colectivos de escuelas rurales. El punto de partida es el conjunto de centros que publica el portal de Datos Abiertos de Canarias, que se completa con el directorio de centros de la Consejería de Educación para añadir lo que allí falta o aparece repartido en varias fuentes: a qué CEP y EOEP pertenece cada centro, su zona de inspección y los nombres que ha tenido a lo largo del tiempo, según las órdenes publicadas en el BOC.</p>
-          <p>Los centros que han cerrado o cambiado de código no se borran: siguen en el listado marcados como «ya no existe», para que los registros antiguos se puedan seguir identificando. Cada día un proceso automático vuelve a consultar las fuentes y, si encuentra cambios, una persona del equipo los revisa antes de publicarlos. Cuando un dato se corrige a mano, queda anotado de dónde sale la corrección.</p>
-          <p class="muted">¿Ha encontrado un dato erróneo? <a href="https://github.com/ateeducacion/listado-centros-educativos-canarias/issues">Avísenos</a> indicando el código del centro. Esta publicación no es oficial ni implica respaldo del Gobierno de Canarias.</p>
-        </div>
-      </div>
-    </section>
   </main>
 
   <main id="detail" class="wrap detail" hidden tabindex="-1" aria-labelledby="detail-title"></main>
@@ -152,10 +142,12 @@
           <svg aria-hidden="true" width="18" height="18" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"></path></svg>
           Código fuente
         </a>
-        <a href="https://ateeducacion.github.io/distancias_centros_educativos_canarias/">Distancias entre centros</a>
-        <a href="https://creativecommons.org/licenses/by/4.0/">Licencia CC BY 4.0</a>
-        <span>Mapa: <a href="https://openfreemap.org/">OpenFreeMap</a> · <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a></span>
+        <a href="https://github.com/ateeducacion/listado-centros-educativos-canarias/blob/main/LICENSE">Licencias</a>
       </nav>
+      <div class="foot-sub">
+        <p class="foot-family">Otros proyectos: <a href="https://ateeducacion.github.io/distancias_centros_educativos_canarias/">Distancias entre centros</a> · <a href="https://ateeducacion.github.io/normativa_educativa_canaria/">Normativa educativa canaria</a></p>
+        <p class="foot-credits">Mapa: <a href="https://openfreemap.org/">OpenFreeMap</a> · <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a></p>
+      </div>
     </div>
   </footer>
 

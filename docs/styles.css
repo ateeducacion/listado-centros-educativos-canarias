@@ -1091,3 +1091,55 @@ pre {
 .detail .back {
   margin-bottom: -12px;
 }
+.foot-sub {
+  flex: 1 1 100%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 24px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+  font-size: 14px;
+  color: var(--footer-muted);
+}
+.foot-sub p {
+  margin: 0;
+}
+.foot-sub a {
+  color: var(--footer-muted);
+}
+.foot-sub a:hover,
+.foot-nav a:hover {
+  color: var(--footer-fg);
+}
+
+.steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.steps li {
+  display: flex;
+  gap: 16px;
+}
+.step-num {
+  flex: 0 0 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+.steps h3 {
+  margin: 0 0 4px;
+  font-size: 18px;
+}
+.steps p {
+  color: var(--ink-2);
+}
