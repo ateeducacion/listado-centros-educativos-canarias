@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Usar los datos en su aplicación · Centros educativos de Canarias</title>
+  <meta name="description" content="Archivos abiertos del listado de centros educativos de Canarias: formatos, manifiesto, campos y ejemplos de código.">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="es_ES">
+  <meta property="og:url" content="https://ateeducacion.github.io/listado-centros-educativos-canarias/desarrolladores/">
+  <meta property="og:title" content="Centros educativos de Canarias">
+  <meta property="og:description" content="Archivos abiertos del listado de centros educativos de Canarias: formatos, manifiesto, campos y ejemplos de código.">
+  <meta property="og:image" content="https://ateeducacion.github.io/listado-centros-educativos-canarias/assets/img/og-image.jpg">
+  <meta property="og:image:type" content="image/jpeg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Listado de centros educativos de Canarias. Tarjeta del ATE con una captura del portal.">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Centros educativos de Canarias">
+  <meta name="twitter:description" content="Archivos abiertos del listado de centros educativos de Canarias: formatos, manifiesto, campos y ejemplos de código.">
+  <meta name="twitter:image" content="https://ateeducacion.github.io/listado-centros-educativos-canarias/assets/img/og-image.jpg">
+  <meta name="twitter:image:alt" content="Listado de centros educativos de Canarias. Tarjeta del ATE con una captura del portal.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../styles.css">
+  <script src="../assets/theme.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap">
+      <a class="brand" href="../">
+        <img src="../assets/img/ate-logo.png" alt="Área de Tecnología Educativa" width="545" height="563">
+        <span>Centros educativos de Canarias</span>
+      </a>
+      <nav class="site-nav" aria-label="Principal">
+        <a href="../#sobre">Sobre los datos</a>
+        <a href="./" aria-current="page">Para desarrolladores</a>
+        <button type="button" id="theme-toggle" class="nav-btn icon-btn" aria-label="Cambiar entre modo claro y oscuro" title="Cambiar tema">
+          <svg class="icon-sun" aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>
+          <svg class="icon-moon" aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79"></path></svg>
+        </button>
+        <a class="nav-btn" href="https://github.com/ateeducacion/listado-centros-educativos-canarias">
+          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"></path></svg>
+          Código fuente
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap article">
+    <a class="back" href="../"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"></path></svg>Volver al buscador</a>
+    <div class="narrow" style="display: flex; flex-direction: column; gap: 12px">
+      <h1 class="page-title">Usar los datos en su aplicación</h1>
+      <p class="lead">Los archivos son públicos: no hace falta clave ni registro y no hay límite de uso. Cada uno tiene siempre la misma dirección, de modo que al leerlo obtiene la última versión. Puede reutilizarlos citando la fuente (licencia <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>).</p>
+      <p class="data-line"><span id="data-updated">Datos actualizados</span> · <span id="schema-version">formato versión 1</span> · se comprueban cada día</p>
+    </div>
+
+    <section aria-labelledby="h-files">
+      <h2 id="h-files" class="section-title">Archivos</h2>
+      <div class="files">
+        <div class="file-row">
+          <div class="file-info">
+            <div class="file-head"><h3>El listado completo</h3><code>centros.csv<span data-meta="centros.csv"></span></code></div>
+            <p>Todos los centros, abiertos y cerrados, con todos los campos. UTF-8 y separado por comas. Para hojas de cálculo y análisis.</p>
+          </div>
+          <div class="file-actions">
+            <a class="btn" href="../centros.csv" download>Descargar</a>
+            <button type="button" class="btn" data-copy-href="../centros.csv" aria-label="Copiar enlace a centros.csv"><span class="copy-label">Copiar enlace</span></button>
+          </div>
+        </div>
+        <div class="file-row">
+          <div class="file-info">
+            <div class="file-head"><h3>El listado completo, en JSON</h3><code>centros.json<span data-meta="centros.json"></span></code></div>
+            <p>Lo mismo que el CSV, como lista de objetos con los mismos nombres de campo. Es el archivo que usa el buscador.</p>
+          </div>
+          <div class="file-actions">
+            <a class="btn" href="../centros.json" download>Descargar</a>
+            <button type="button" class="btn" data-copy-href="../centros.json" aria-label="Copiar enlace a centros.json"><span class="copy-label">Copiar enlace</span></button>
+          </div>
+        </div>
+        <div class="file-row">
+          <div class="file-info">
+            <div class="file-head"><h3>El listado ligero</h3><code>centros.min.json<span data-meta="centros.min.json"></span></code></div>
+            <p>Lo justo para un desplegable o un formulario: código, nombre, isla, municipio, tipo, códigos del CEP y del EOEP, y si sigue abierto.</p>
+          </div>
+          <div class="file-actions">
+            <a class="btn" href="../centros.min.json" download>Descargar</a>
+            <button type="button" class="btn" data-copy-href="../centros.min.json" aria-label="Copiar enlace a centros.min.json"><span class="copy-label">Copiar enlace</span></button>
+          </div>
+        </div>
+        <div class="file-row">
+          <div class="file-info">
+            <div class="file-head"><h3>Los centros con ubicación</h3><code>centros-distancias.csv<span data-meta="centros-distancias.csv"></span></code></div>
+            <p>Solo centros abiertos con coordenadas. Es el que usa la <a href="https://ateeducacion.github.io/distancias_centros_educativos_canarias/">calculadora de distancias</a>.</p>
+          </div>
+          <div class="file-actions">
+            <a class="btn" href="../centros-distancias.csv" download>Descargar</a>
+            <button type="button" class="btn" data-copy-href="../centros-distancias.csv" aria-label="Copiar enlace a centros-distancias.csv"><span class="copy-label">Copiar enlace</span></button>
+          </div>
+        </div>
+        <div class="file-row">
+          <div class="file-info">
+            <div class="file-head"><h3>El manifiesto</h3><code>manifest.json</code></div>
+            <p>La fecha, los recuentos y la huella de cada archivo. Se explica más abajo.</p>
+          </div>
+          <div class="file-actions">
+            <a class="btn" href="../manifest.json" download>Descargar</a>
+            <button type="button" class="btn" data-copy-href="../manifest.json" aria-label="Copiar enlace a manifest.json"><span class="copy-label">Copiar enlace</span></button>
+          </div>
+        </div>
+      </div>
+      <p class="muted small">Todas las direcciones empiezan por <code>https://ateeducacion.github.io/listado-centros-educativos-canarias/</code></p>
+    </section>
+
+    <section aria-labelledby="h-manifest">
+      <h2 id="h-manifest" class="section-title">El manifiesto, en pocas palabras</h2>
+      <div class="split">
+        <div style="display: flex; flex-direction: column; gap: 12px">
+          <p>Es la etiqueta de cada versión de los datos: un archivo pequeño, sin datos de centros, que dice cuándo se generó la publicación, cuántos centros tiene y cómo es cada archivo.</p>
+          <p>Sirve para saber si hay datos nuevos sin descargarlo todo (basta con leerlo y comparar la fecha o la huella con las de la última vez) y para comprobar que una descarga ha llegado entera.</p>
+        </div>
+        <div class="wide table-box">
+          <table class="fields" style="min-width: 440px">
+            <thead><tr><th scope="col" style="padding-left: 14px">Campo</th><th scope="col">Qué le dice</th></tr></thead>
+            <tbody>
+              <tr><td style="padding-left: 14px"><code>generated_at</code></td><td>Cuándo se generó esta versión de los datos.</td></tr>
+              <tr><td style="padding-left: 14px"><code>schema_version</code></td><td>La versión del formato. Si cambia, revise cómo lee los archivos.</td></tr>
+              <tr><td style="padding-left: 14px"><code>records</code> · <code>active_records</code></td><td>Cuántos centros hay en total y cuántos siguen abiertos.</td></tr>
+              <tr><td style="padding-left: 14px"><code>files.&lt;archivo&gt;.bytes</code></td><td>El tamaño exacto del archivo. El que descargue debe medir lo mismo.</td></tr>
+              <tr><td style="padding-left: 14px"><code>files.&lt;archivo&gt;.records</code></td><td>Cuántas filas tiene ese archivo.</td></tr>
+              <tr><td style="padding-left: 14px"><code>files.&lt;archivo&gt;.sha256</code></td><td>Su huella. Si coincide con la de su copia, la descarga está completa y sin cambios.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="h-fields">
+      <h2 id="h-fields" class="section-title">Qué significa cada campo</h2>
+      <p class="muted narrow">Los más usados de <code>centros.csv</code> y <code>centros.json</code>. La lista completa de campos está en el <a href="https://github.com/ateeducacion/listado-centros-educativos-canarias#archivo-principal">README</a>.</p>
+      <div class="table-box">
+        <table class="fields" style="min-width: 640px">
+          <thead><tr><th scope="col" style="padding-left: 14px">Campo</th><th scope="col">Qué contiene</th></tr></thead>
+          <tbody>
+            <tr><td style="padding-left: 14px"><code>Codigo</code></td><td>Código oficial del centro, ocho dígitos. Léalo siempre como texto.</td></tr>
+            <tr><td style="padding-left: 14px"><code>Denominacion</code></td><td>Nombre actual del centro.</td></tr>
+            <tr><td style="padding-left: 14px"><code>DesEtapaCentro</code></td><td>Tipo de centro abreviado: CEIP, IES, CEPA, CER…</td></tr>
+            <tr><td style="padding-left: 14px"><code>Municipio</code> · <code>Isla</code></td><td>Municipio e isla, en mayúsculas.</td></tr>
+            <tr><td style="padding-left: 14px"><code>CentroProfesoresCodigo</code></td><td>Código del CEP al que está adscrito. El CEP es a su vez un centro del listado.</td></tr>
+            <tr><td style="padding-left: 14px"><code>EOEP</code></td><td>Equipo de orientación de zona, con código y nombre.</td></tr>
+            <tr><td style="padding-left: 14px"><code>ZonaInspeccionCodigo</code></td><td>Zona de inspección educativa.</td></tr>
+            <tr><td style="padding-left: 14px"><code>Latitud</code> · <code>Longitud</code></td><td>Ubicación en grados decimales. Falta en algunos centros.</td></tr>
+            <tr><td style="padding-left: 14px"><code>Activo</code></td><td><code>1</code> si el centro sigue abierto; <code>0</code> si ya no existe y se conserva como histórico.</td></tr>
+            <tr><td style="padding-left: 14px"><code>FechaBaja</code> · <code>CodigoSustituidoPor</code></td><td>Cuándo cerró y qué código lo sustituye, si se sabe.</td></tr>
+            <tr><td style="padding-left: 14px"><code>DenominacionesAnteriores</code></td><td>Nombres anteriores, del más reciente al más antiguo, separados por <code> | </code>.</td></tr>
+            <tr><td style="padding-left: 14px"><code>CamposCorregidos</code></td><td>Campos cuyo valor se ha corregido a mano respecto a la fuente original.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section aria-labelledby="h-examples">
+      <h2 id="h-examples" class="section-title">Ejemplos</h2>
+      <div class="chips" role="group" aria-label="Lenguaje" id="example-tabs">
+        <button type="button" class="chip" aria-pressed="true" data-example="js">JavaScript</button>
+        <button type="button" class="chip" aria-pressed="false" data-example="py">Python</button>
+        <button type="button" class="chip" aria-pressed="false" data-example="sh">Terminal</button>
+      </div>
+      <div data-example-panel="js">
+        <p class="muted">Rellenar un desplegable con los centros abiertos de una isla, usando el archivo ligero.</p>
+        <pre class="code">const URL = "https://ateeducacion.github.io/listado-centros-educativos-canarias/centros.min.json";
+const centros = await fetch(URL).then((r) =&gt; r.json());
+
+const tenerife = centros
+  .filter((c) =&gt; c.active &amp;&amp; c.island === "TENERIFE")
+  .map((c) =&gt; new Option(c.name, c.code));
+
+document.querySelector("#centro").append(...tenerife);</pre>
+      </div>
+      <div data-example-panel="py" hidden>
+        <p class="muted">Cargar el listado completo con pandas. Lea el código como texto para no perder ningún dígito.</p>
+        <pre class="code">import pandas as pd
+
+URL = "https://ateeducacion.github.io/listado-centros-educativos-canarias/centros.csv"
+centros = pd.read_csv(URL, dtype={"Codigo": str})
+
+abiertos = centros[centros["Activo"] == 1]
+print(abiertos.groupby("Isla").size())</pre>
+      </div>
+      <div data-example-panel="sh" hidden>
+        <p class="muted">Descargar el CSV y comprobar que ha llegado entero comparando su huella con la del manifiesto.</p>
+        <pre class="code">BASE=https://ateeducacion.github.io/listado-centros-educativos-canarias
+curl -sO "$BASE/centros.csv"
+
+esperada=$(curl -s "$BASE/manifest.json" | jq -r '.files["centros.csv"].sha256')
+echo "$esperada  centros.csv" | shasum -a 256 -c -</pre>
+      </div>
+    </section>
+
+    <section aria-labelledby="h-before">
+      <h2 id="h-before" class="section-title">Antes de empezar</h2>
+      <ul class="narrow" style="margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 10px">
+        <li><strong>El listado incluye centros que ya no existen.</strong> Si solo quiere los abiertos, filtre por <code>Activo = 1</code> (o <code>active</code> en el archivo ligero).</li>
+        <li><strong>Trate el código como texto, nunca como número,</strong> y úselo para enlazar registros: el nombre puede cambiar y el código no.</li>
+        <li><strong>No hay límite de uso,</strong> pero si su aplicación consulta los datos a menudo, lea primero el manifiesto y descargue los archivos solo cuando cambien.</li>
+        <li><strong>Licencia CC BY 4.0.</strong> Cite «Área de Tecnología Educativa, Gobierno de Canarias» y enlace a esta página. Los datos parten de Datos Abiertos de Canarias; no es una publicación oficial.</li>
+      </ul>
+    </section>
+
+    <section aria-labelledby="h-links">
+      <h2 id="h-links" class="section-title">Enlazar a un centro</h2>
+      <p class="narrow">Para llevar a alguien a la ficha de un centro, añada su código a la dirección del buscador. Para abrir la calculadora de distancias con ese centro como salida, use <code>origin</code>.</p>
+      <dl class="link-list">
+        <dt><code>…/listado-centros-educativos-canarias/?centro=35002911</code></dt>
+        <dd>Ficha del IES Pérez Galdós.</dd>
+        <dt><code>…/distancias_centros_educativos_canarias/?origin=35002911</code></dt>
+        <dd>Calculadora con ese centro como salida.</dd>
+      </dl>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <div class="foot-brand">
+        <span class="foot-logo"><img src="../assets/img/ate-logo.png" alt="" width="545" height="563"></span>
+        <p>Un proyecto del <strong>Área de Tecnología Educativa</strong><br><span>Consejería de Educación del Gobierno de Canarias</span></p>
+      </div>
+      <nav class="foot-nav" aria-label="Proyecto">
+        <a class="foot-strong" href="https://github.com/ateeducacion/listado-centros-educativos-canarias">
+          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"></path></svg>
+          Código fuente
+        </a>
+        <a href="https://ateeducacion.github.io/distancias_centros_educativos_canarias/">Distancias entre centros</a>
+        <a href="https://creativecommons.org/licenses/by/4.0/">Licencia CC BY 4.0</a>
+        <span>Mapa: <a href="https://openfreemap.org/">OpenFreeMap</a> · <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a></span>
+      </nav>
+    </div>
+  </footer>
+
+  <script src="../assets/common.js"></script>
+  <script src="../assets/developers.js"></script>
+</body>
+</html>
