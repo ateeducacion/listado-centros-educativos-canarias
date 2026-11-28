@@ -183,7 +183,9 @@ Los consumidores deben usar estos contratos en lugar de volver a consultar direc
 
 ## Sitio web
 
-La documentación de GitHub Pages explica las fuentes, el modelo de datos y el proceso de actualización. También permite buscar y filtrar el contenido de `centros.csv` desde el navegador.
+El sitio de GitHub Pages (`docs/`) es un buscador de centros: se filtra por nombre, código, municipio, isla y tipo de centro, en lista o en mapa, y cada centro tiene su ficha en `?centro=<código>` (por ejemplo, `?centro=35002911`). La ficha enlaza con la [calculadora de distancias](https://ateeducacion.github.io/distancias_centros_educativos_canarias/) mediante `?origin=<código>`, y la calculadora enlaza de vuelta con la ficha.
+
+La página `desarrolladores/` reúne los archivos publicados con su tamaño y su número de registros (leídos de `manifest.json`), explica el manifiesto y los campos más usados, e incluye ejemplos de uso. Comparte estilos con el sitio de distancias para que los dos se vean iguales.
 
 ## Limitaciones
 

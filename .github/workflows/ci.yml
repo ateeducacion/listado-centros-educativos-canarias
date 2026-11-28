@@ -79,4 +79,4 @@ jobs:
           node-version: "24"
 
       - name: Check JavaScript syntax
-        run: node --check docs/app.js
+        run: for file in docs/app.js docs/assets/*.js; do node --check "$file"; done
