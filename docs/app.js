@@ -15,6 +15,7 @@ const ISLANDS = [
 const ISLAND_NAMES = new Map(ISLANDS);
 const ICONS = {
   chevron: "M9 6l6 6-6 6",
+  chevronDown: "M6 9l6 6 6-6",
   back: "M19 12H5M11 6l-6 6 6 6",
   copy: "M9 9h11v11H9zM5 15H4V4h11v1",
   pin: "M12 21s-7-6.1-7-11.5a7 7 0 0 1 14 0C19 14.9 12 21 12 21zM12 7a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z",
@@ -45,6 +46,19 @@ const isActive = (row) => !["0", "false", "no", "inactive", "inactivo"]
   .includes(normalized(row.Activo || "1"));
 const islandName = (value) => ISLAND_NAMES.get(text(value)) || text(value);
 const centreUrl = (code) => `?centro=${encodeURIComponent(code)}`;
+// «Público», «Privado concertado» or «Privado», from Naturaleza and Concierto.
+function ownership(row) {
+  const nature = normalized(row.Naturaleza);
+  if (nature === "publico") {
+    return { label: "Público", kind: "public" };
+  }
+  if (nature === "privado") {
+    return normalized(row.Concierto).startsWith("con ")
+      ? { label: "Privado concertado", kind: "private" }
+      : { label: "Privado", kind: "private" };
+  }
+  return null;
+}
 const formerNames = (row) => text(row.DenominacionesAnteriores)
   .split(" | ")
   .map((name) => name.trim())
@@ -179,7 +193,8 @@ function resultItem(row) {
           el("span", { class: "r-name" }, text(row.Denominacion)),
           isActive(row) ? null : el("span", { class: "badge-closed" }, "Ya no existe"),
         ),
-        el("span", { class: "r-meta" }, text(row.DescripcionEtapaCentro) || text(row.DesEtapaCentro)),
+        el("span", { class: "r-meta" }, [text(row.DescripcionEtapaCentro) || text(row.DesEtapaCentro), ownership(row)?.label]
+          .filter(Boolean).join(" · ")),
         former ? el("span", { class: "r-meta" }, `Antes: ${former}`) : null,
       ),
       el("span", { class: "r-place" }, place(row)),
@@ -528,11 +543,11 @@ function renderDetail(row) {
   const replacement = text(row.CodigoSustituidoPor);
   const closedSince = formatDate(text(row.FechaBaja));
 
-  const headLines = [
-    [text(row.DescripcionEtapaCentro) || text(row.DesEtapaCentro), text(row.Naturaleza)].filter(Boolean).join(" · "),
-  ];
+  const headLines = [text(row.DescripcionEtapaCentro) || text(row.DesEtapaCentro)].filter(Boolean);
+  const owner = ownership(row);
 
   const tools = el("div", { class: "detail-tools" },
+    owner ? el("span", { class: `badge-owner is-${owner.kind}` }, owner.label) : null,
     active ? null : el("span", { class: "badge-closed" }, "Ya no existe"),
     el("span", { class: "detail-code" }, el("span", {}, "Código"), el("code", {}, code)),
     iconButton("button", { type: "button", class: "btn", "data-copy": code, "data-done": "Copiado" }, ICONS.copy, "Copiar código"),
@@ -584,14 +599,19 @@ function renderDetail(row) {
     ),
   ) : null;
 
+  const fields = Object.entries(row).filter(([key, value]) => !key.startsWith("_") && text(value));
   const allFields = el("details", { class: "all-fields" },
-    el("summary", {}, "Todos los campos y su procedencia"),
+    el("summary", {},
+      el("span", { class: "sum-text" },
+        el("strong", {}, "Ver todos los datos del centro"),
+        el("span", {}, `${fields.length} campos con datos, tal como aparecen en el archivo descargable, con la procedencia de cada corrección`),
+      ),
+      el("span", { class: "sum-icon" }, svgIcon(ICONS.chevronDown, 20)),
+    ),
     el("div", { class: "table-box" },
       el("table", { class: "fields" },
         el("thead", {}, el("tr", {}, el("th", { scope: "col" }, "Campo"), el("th", { scope: "col" }, "Valor"))),
-        el("tbody", {}, Object.entries(row)
-          .filter(([key, value]) => !key.startsWith("_") && text(value))
-          .map(([key, value]) => el("tr", {}, el("td", {}, el("code", {}, key)), el("td", {}, text(value))))),
+        el("tbody", {}, fields.map(([key, value]) => el("tr", {}, el("td", {}, el("code", {}, key)), el("td", {}, text(value))))),
       ),
     ),
   );
