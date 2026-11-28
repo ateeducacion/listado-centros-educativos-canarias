@@ -1143,3 +1143,8 @@ pre {
 .steps p {
   color: var(--ink-2);
 }
+[data-example-panel] {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}

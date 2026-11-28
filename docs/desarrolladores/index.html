@@ -40,9 +40,8 @@
           <svg class="icon-sun" aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>
           <svg class="icon-moon" aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79"></path></svg>
         </button>
-        <a class="nav-btn" href="https://github.com/ateeducacion/listado-centros-educativos-canarias">
-          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"></path></svg>
-          Código fuente
+        <a class="nav-btn icon-btn" href="https://github.com/ateeducacion/listado-centros-educativos-canarias" aria-label="Código fuente en GitHub" title="Código fuente en GitHub">
+          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"></path></svg>
         </a>
       </nav>
     </div>
@@ -163,11 +162,39 @@
     <section aria-labelledby="h-examples">
       <h2 id="h-examples" class="section-title">Ejemplos</h2>
       <div class="chips" role="group" aria-label="Lenguaje" id="example-tabs">
-        <button type="button" class="chip" aria-pressed="true" data-example="js">JavaScript</button>
+        <button type="button" class="chip" aria-pressed="true" data-example="sheets">Google Sheets</button>
+        <button type="button" class="chip" aria-pressed="false" data-example="excel">Excel</button>
+        <button type="button" class="chip" aria-pressed="false" data-example="js">JavaScript</button>
         <button type="button" class="chip" aria-pressed="false" data-example="py">Python</button>
         <button type="button" class="chip" aria-pressed="false" data-example="sh">Terminal</button>
       </div>
-      <div data-example-panel="js">
+      <div data-example-panel="sheets">
+        <p class="muted">Escriba esta fórmula en la celda A1 de una hoja vacía. Trae todo el listado y se actualiza solo cada cierto tiempo.</p>
+        <pre class="code">=IMPORTDATA("https://ateeducacion.github.io/listado-centros-educativos-canarias/centros.csv")</pre>
+        <p class="muted">Para traer solo algunas columnas de los centros abiertos (código, nombre, municipio e isla), combínela con QUERY. La columna 40 es <code>Activo</code>.</p>
+        <pre class="code">=QUERY(IMPORTDATA("https://ateeducacion.github.io/listado-centros-educativos-canarias/centros.csv"); "select Col1, Col2, Col8, Col9 where Col40 = 1"; 1)</pre>
+        <p class="muted small">Si su hoja de cálculo está configurada en inglés, separe los argumentos con comas en lugar de punto y coma.</p>
+      </div>
+      <div data-example-panel="excel" hidden>
+        <p class="muted">Excel no tiene una fórmula para leer un CSV de internet, pero puede conectarse a él y actualizarlo cuando quiera:</p>
+        <ol style="margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px">
+          <li>En la pestaña <strong>Datos</strong>, pulse <strong>De la Web</strong> (grupo <strong>Obtener y transformar datos</strong>).</li>
+          <li>Pegue la dirección <code>https://ateeducacion.github.io/listado-centros-educativos-canarias/centros.csv</code> y pulse <strong>Aceptar</strong>.</li>
+          <li>Compruebe que el origen del archivo es <strong>65001: Unicode (UTF-8)</strong> y pulse <strong>Cargar</strong>.</li>
+          <li>Para traer la versión más reciente, use <strong>Datos › Actualizar todo</strong>.</li>
+        </ol>
+        <p class="muted">Si prefiere escribir la consulta en el editor de Power Query (<strong>Inicio › Editor avanzado</strong>), este es el código equivalente:</p>
+        <pre class="code">let
+    Origen = Csv.Document(
+        Web.Contents("https://ateeducacion.github.io/listado-centros-educativos-canarias/centros.csv"),
+        [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]
+    ),
+    Centros = Table.PromoteHeaders(Origen, [PromoteAllScalars = true]),
+    Tipos = Table.TransformColumnTypes(Centros, {{"Codigo", type text}})
+in
+    Tipos</pre>
+      </div>
+      <div data-example-panel="js" hidden>
         <p class="muted">Rellenar un desplegable con los centros abiertos de una isla, usando el archivo ligero.</p>
         <pre class="code">const URL = "https://ateeducacion.github.io/listado-centros-educativos-canarias/centros.min.json";
 const centros = await fetch(URL).then((r) =&gt; r.json());
@@ -231,7 +258,7 @@ echo "$esperada  centros.csv" | shasum -a 256 -c -</pre>
           <svg aria-hidden="true" width="18" height="18" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"></path></svg>
           Código fuente
         </a>
-        <a href="https://github.com/ateeducacion/listado-centros-educativos-canarias/blob/main/LICENSE">Licencias</a>
+        <a href="https://github.com/ateeducacion/listado-centros-educativos-canarias/blob/main/LICENSE">Licencia CC BY 4.0</a>
       </nav>
       <div class="foot-sub">
         <p class="foot-family">Otros proyectos: <a href="https://ateeducacion.github.io/distancias_centros_educativos_canarias/">Distancias entre centros</a> · <a href="https://ateeducacion.github.io/normativa_educativa_canaria/">Normativa educativa canaria</a></p>
