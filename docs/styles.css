@@ -1091,3 +1091,24 @@ pre {
 .detail .back {
   margin-bottom: -12px;
 }
+.foot-sub {
+  flex: 1 1 100%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 24px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+  font-size: 14px;
+  color: var(--footer-muted);
+}
+.foot-sub p {
+  margin: 0;
+}
+.foot-sub a {
+  color: var(--footer-muted);
+}
+.foot-sub a:hover,
+.foot-nav a:hover {
+  color: var(--footer-fg);
+}
