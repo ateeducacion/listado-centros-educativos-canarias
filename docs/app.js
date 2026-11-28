@@ -280,23 +280,79 @@ function popupContent(properties) {
   );
 }
 
+// Below state.totalZoom the map shows a single circle with the total; above
+// it, the centres split into clusters by zone until each one stands alone.
+// The threshold sits just above the starting zoom, so it works for any map
+// width.
+// Fonts must exist on the tile server or MapLibre drops the whole source.
+const MAP_FONT = ["Noto Sans Bold"];
+
+function totalCollection(rows) {
+  const points = rows.map(coordinates).filter(Boolean);
+  if (points.length === 0) {
+    return { type: "FeatureCollection", features: [] };
+  }
+  const lng = points.reduce((sum, point) => sum + point[0], 0) / points.length;
+  const lat = points.reduce((sum, point) => sum + point[1], 0) / points.length;
+  return {
+    type: "FeatureCollection",
+    features: [{
+      type: "Feature",
+      geometry: { type: "Point", coordinates: [lng, lat] },
+      properties: { label: `${points.length.toLocaleString("es-ES")}\ncentros` },
+    }],
+  };
+}
+
 function addMapLayers() {
   const map = state.map;
+  // On load the map shows the whole archipelago, as far as maxBounds allows.
+  state.totalZoom = map.getZoom() + 0.6;
+  const TOTAL_ZOOM = state.totalZoom;
   map.addSource("centres", {
     type: "geojson",
     data: featureCollection([]),
     cluster: true,
-    clusterMaxZoom: 13,
-    clusterRadius: 45,
+    clusterMaxZoom: 14,
+    clusterRadius: 60,
+  });
+  map.addSource("total", { type: "geojson", data: totalCollection([]) });
+
+  map.addLayer({
+    id: "total-circle",
+    type: "circle",
+    source: "total",
+    maxzoom: TOTAL_ZOOM,
+    paint: {
+      "circle-color": "#005ea8",
+      "circle-radius": 46,
+      "circle-stroke-width": 3,
+      "circle-stroke-color": "#ffffff",
+    },
+  });
+  map.addLayer({
+    id: "total-count",
+    type: "symbol",
+    source: "total",
+    maxzoom: TOTAL_ZOOM,
+    layout: {
+      "text-field": ["get", "label"],
+      "text-font": MAP_FONT,
+      "text-size": 15,
+      "text-line-height": 1.1,
+      "text-allow-overlap": true,
+    },
+    paint: { "text-color": "#ffffff" },
   });
   map.addLayer({
     id: "clusters",
     type: "circle",
     source: "centres",
+    minzoom: TOTAL_ZOOM,
     filter: ["has", "point_count"],
     paint: {
       "circle-color": "#005ea8",
-      "circle-radius": ["step", ["get", "point_count"], 17, 50, 23, 200, 30],
+      "circle-radius": ["step", ["get", "point_count"], 18, 25, 24, 100, 30, 300, 38],
       "circle-stroke-width": 2,
       "circle-stroke-color": "#ffffff",
     },
@@ -305,14 +361,21 @@ function addMapLayers() {
     id: "cluster-count",
     type: "symbol",
     source: "centres",
+    minzoom: TOTAL_ZOOM,
     filter: ["has", "point_count"],
-    layout: { "text-field": ["get", "point_count_abbreviated"], "text-size": 12 },
+    layout: {
+      "text-field": ["get", "point_count_abbreviated"],
+      "text-font": MAP_FONT,
+      "text-size": 13,
+      "text-allow-overlap": true,
+    },
     paint: { "text-color": "#ffffff" },
   });
   map.addLayer({
     id: "centres-points",
     type: "circle",
     source: "centres",
+    minzoom: TOTAL_ZOOM,
     filter: ["!", ["has", "point_count"]],
     paint: {
       "circle-color": ["match", ["get", "status"], "inactive", "#6b7480", "#005ea8"],
@@ -339,7 +402,14 @@ function addMapLayers() {
         .addTo(map);
     }
   });
-  ["clusters", "centres-points"].forEach((layer) => {
+  map.on("click", "total-circle", (event) => {
+    map.easeTo({
+      center: event.features[0].geometry.coordinates,
+      zoom: Math.max(map.getZoom() + 1.2, state.totalZoom + 0.5),
+      duration: 500,
+    });
+  });
+  ["total-circle", "clusters", "centres-points"].forEach((layer) => {
     map.on("mouseenter", layer, () => { map.getCanvas().style.cursor = "pointer"; });
     map.on("mouseleave", layer, () => { map.getCanvas().style.cursor = ""; });
   });
@@ -388,6 +458,7 @@ function renderMap() {
     return;
   }
   state.map.getSource("centres").setData(featureCollection(mapped));
+  state.map.getSource("total").setData(totalCollection(mapped));
 
   if (state.pendingFocus) {
     const { point, row } = state.pendingFocus;
