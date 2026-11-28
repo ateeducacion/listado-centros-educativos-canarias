@@ -169,7 +169,7 @@ pre {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  min-height: 40px;
+  min-height: 44px;
   padding: 0 14px;
   margin-left: 4px;
   font: inherit;
@@ -185,7 +185,7 @@ pre {
   border-color: var(--ink);
 }
 .site-nav .icon-btn {
-  width: 40px;
+  width: 44px;
   padding: 0;
   justify-content: center;
 }
